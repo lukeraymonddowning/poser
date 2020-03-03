@@ -1,0 +1,41 @@
+{
+    "name": "lukeraymonddowning/poser",
+    "description": "A description for poser.",
+    "type": "package",
+    "license": "MIT",
+    "keywords": [
+        "laravel"
+    ],
+    "authors": [
+        {
+            "name": "Luke Raymond Downing",
+            "email": "lukeraymonddowning@gmail.com"
+        }
+    ],
+    "require": {
+        "illuminate/support": "^6.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Lukeraymonddowning\\Poser\\": "./src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Lukeraymonddowning\\Poser\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Lukeraymonddowning\\Poser\\PoserServiceProvider"
+            ]
+        }
+    },
+    "require-dev": {
+        "orchestra/testbench": "^4.0"
+    }
+}
