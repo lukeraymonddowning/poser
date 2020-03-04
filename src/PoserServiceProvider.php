@@ -8,7 +8,10 @@ class PoserServiceProvider extends ServiceProvider {
 
     public function register()
     {
-
+        $this->mergeConfigFrom(
+            __DIR__ . '/config/poser.php',
+            'poser'
+        );
     }
 
     public function boot()

@@ -10,11 +10,13 @@ use Tests\Factories\UserFactory;
 use Illuminate\Support\Collection;
 use Tests\Factories\CustomerFactory;
 use Illuminate\Database\Eloquent\Model;
+use phpDocumentor\Reflection\Types\Integer;
 use Lukeraymonddowning\Poser\Exceptions\ArgumentsNotSatisfiableException;
 
 abstract class Factory {
 
     protected static $modelName = null;
+    private static $relationshipPrefixes = ['with', 'for'];
 
     protected
         $count = 1,
@@ -61,25 +63,60 @@ abstract class Factory {
 
     protected function handleSaveMethodRelationships($functionName, $arguments)
     {
-        $this->saveMethodRelationships[$this->getRelationshipMethodName($functionName, 'with')] = $this->getModelDataFromFunctionArguments($functionName, $arguments);
+        $this->saveMethodRelationships[$this->getRelationshipMethodName($functionName)] = $this->getModelDataFromFunctionArguments($functionName, $arguments);
     }
 
     protected function handleBelongsToRelationships($functionName, $arguments)
     {
-        $this->belongsToRelationships[$this->getRelationshipMethodName($functionName, 'for')] = $this->getModelDataFromFunctionArguments($functionName, $arguments);
+        $this->belongsToRelationships[$this->getRelationshipMethodName($functionName)] = $this->getModelDataFromFunctionArguments($functionName, $arguments);
     }
 
-    private function getRelationshipMethodName($functionName, $prefix)
+    private function getRelationshipMethodName($functionName)
     {
+        $prefix = collect(static::$relationshipPrefixes)->filter(function ($prefix) use ($functionName) {
+            return Str::contains($functionName, $prefix);
+        })->first();
+
         return Str::camel(Str::after($functionName, $prefix));
     }
 
     private function getModelDataFromFunctionArguments($functionName, $arguments)
     {
-        if (isset($arguments[0]))
+        if (isset($arguments[0]) && !is_int($arguments[0]) && !is_array($arguments[0]))
             return $arguments[0];
 
-        throw new ArgumentsNotSatisfiableException();
+        $factory = $this->getFactoryFor($this->getRelationshipMethodName($functionName));
+
+        if (empty($factory))
+            throw new ArgumentsNotSatisfiableException();
+
+
+        $factory = isset($arguments[0]) && is_int($arguments[0]) ? call_user_func($factory .'::times', $arguments[0]) : call_user_func($factory .'::new');
+
+        if (isset($arguments[0]) && is_array($arguments[0]))
+            $factory->withAttributes($arguments[0]);
+
+        if (isset($arguments[1]) && is_array($arguments[1]))
+            $factory->withAttributes($arguments[1]);
+
+        return $factory;
+    }
+
+    protected function getFactoryFor($relationshipMethodName)
+    {
+        $factoryLocation = config('poser.factories_directory', "Tests\\Factories\\");
+
+        $singularRelationship = Str::singular($relationshipMethodName);
+
+        if (class_exists($factoryLocation . Str::title($singularRelationship))) {
+            return $factoryLocation . Str::title($singularRelationship);
+        }
+
+        if (class_exists($factoryLocation . Str::title($singularRelationship . "Factory"))) {
+            return $factoryLocation . Str::title($singularRelationship . "Factory");
+        }
+
+        return null;
     }
 
     public function withAttributes($attributes)
@@ -93,7 +130,7 @@ abstract class Factory {
     {
         $result = $this->make($attributes);
 
-        $this->performActionToModels($result, function($model) {
+        $this->performActionToModels($result, function ($model) {
             $this->addBelongsToRelationships($model);
         });
 
@@ -161,19 +198,12 @@ abstract class Factory {
 
     public function make($attributes = [])
     {
-        return $this->buildBy(function ($factory) use ($attributes) {
-            return $factory->make(array_merge($this->attributes, $attributes));
-        });
-    }
-
-    private function buildBy(Closure $closure)
-    {
         $factory = factory($this->getModelName());
 
         if ($this->count > 1)
             $factory->times($this->count);
 
-        $result = $closure($factory);
+        $result = $factory->make(array_merge($this->attributes, $attributes));
 
         return $result;
     }
