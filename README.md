@@ -315,7 +315,7 @@ $customer = CustomerFactory::new()
 
 ```
 
-
+As Poser makes use of the built in Laravel factory methods, you can use the `afterMaking()`, `afterCreating()`, `afterMakingState()` and `afterCreatingState()` callbacks in your Laravel database factories as you always have done, and they will be called as you would expect.  
 
 ### Factory API
 
