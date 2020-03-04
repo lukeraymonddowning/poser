@@ -25,6 +25,8 @@ abstract class Factory {
         $attributes = [],
         $states = [];
 
+    public $factory;
+
     public static function new()
     {
         return new static();
@@ -92,7 +94,7 @@ abstract class Factory {
             throw new ArgumentsNotSatisfiableException();
 
 
-        $factory = isset($arguments[0]) && is_int($arguments[0]) ? call_user_func($factory .'::times', $arguments[0]) : call_user_func($factory .'::new');
+        $factory = isset($arguments[0]) && is_int($arguments[0]) ? call_user_func($factory . '::times', $arguments[0]) : call_user_func($factory . '::new');
 
         if (isset($arguments[0]) && is_array($arguments[0]))
             $factory->withAttributes($arguments[0]);
@@ -142,6 +144,8 @@ abstract class Factory {
         } else if ($result instanceof Model) {
             $result->save();
         }
+
+        $this->factory->callAfterCreating($result);
 
         if ($result instanceof Collection) {
             $result->each(function ($model) {
@@ -199,13 +203,15 @@ abstract class Factory {
 
     public function make($attributes = [])
     {
-        $factory = factory($this->getModelName())
-            ->states($this->states);
+        if (empty($this->factory))
+            $this->factory = factory($this->getModelName());
+
+        $this->factory->states($this->states);
 
         if ($this->count > 1)
-            $factory->times($this->count);
+            $this->factory->times($this->count);
 
-        $result = $factory->make(array_merge($this->attributes, $attributes));
+        $result = $this->factory->make(array_merge($this->attributes, $attributes));
 
         return $result;
     }
@@ -232,8 +238,8 @@ abstract class Factory {
 
     public function states(...$states)
     {
-        collect($states)->flatten()->each(function($state) {
-           $this->states[] = $state;
+        collect($states)->flatten()->each(function ($state) {
+            $this->states[] = $state;
         });
 
         return $this;
