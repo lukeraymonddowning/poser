@@ -327,6 +327,14 @@ created models.
 You may pass an associative array of column names with desired values, which will be applied to the 
 created models.
 
+#### ->state(string $state)
+You may pass a factory state that you have defined in your laravel model factory, which will be applied
+to the created models.
+
+#### ->states(...$states)
+Similar to ->state(string $state), but allows you to pass in multiple states that will all be applied
+to the created models.
+
 ### Things to note
 #### Models location
 By default, Poser looks for your models in the 'App' directory, which should be fine for most projects.
