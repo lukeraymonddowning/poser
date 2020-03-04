@@ -140,7 +140,7 @@ Similar to the Laravel factory 'make' command, this will make the models without
 database. You may pass an associative array of column names with desired values, which will be applied to the 
 created models.
 
-### ->withAttributes(array $attributes)
+#### ->withAttributes(array $attributes)
 You may pass an associative array of column names with desired values, which will be applied to the 
 created models.
 
