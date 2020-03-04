@@ -16,7 +16,7 @@ use Lukeraymonddowning\Poser\Exceptions\ArgumentsNotSatisfiableException;
 abstract class Factory {
 
     protected static $modelName = null;
-    private static $relationshipPrefixes = ['with', 'for'];
+    protected static $relationshipPrefixes = ['with', 'for'];
 
     protected
         $count = 1,
