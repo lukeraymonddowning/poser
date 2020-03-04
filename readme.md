@@ -105,7 +105,7 @@ public function user_has_customers()
 
 #### Magic Bindings
 If your model relationship method name (ie: the 'customers()' method on our 'User' model) is the same
-or plural version of our Factory class (ie: 'CustomerFactory'), then we can take advantage of Magic Bindings
+or a plural version of our Factory class (ie: 'CustomerFactory'), then we can take advantage of Magic Bindings
 in Poser.
 
 Let's take another look at our User/Customer example.
