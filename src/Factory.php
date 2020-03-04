@@ -82,7 +82,7 @@ abstract class Factory {
 
     private function getModelDataFromFunctionArguments($functionName, $arguments)
     {
-        if (isset($arguments[0]) && !is_int($arguments[0]))
+        if (isset($arguments[0]) && !is_int($arguments[0]) && !is_array($arguments[0]))
             return $arguments[0];
 
         $factory = $this->getFactoryFor($this->getRelationshipMethodName($functionName));
@@ -90,8 +90,16 @@ abstract class Factory {
         if (empty($factory))
             throw new ArgumentsNotSatisfiableException();
 
-        
-        return isset($arguments[0]) && is_int($arguments[0]) ? call_user_func($factory .'::times', $arguments[0]) : call_user_func($factory .'::new');
+
+        $factory = isset($arguments[0]) && is_int($arguments[0]) ? call_user_func($factory .'::times', $arguments[0]) : call_user_func($factory .'::new');
+
+        if (isset($arguments[0]) && is_array($arguments[0]))
+            $factory->withAttributes($arguments[0]);
+
+        if (isset($arguments[1]) && is_array($arguments[1]))
+            $factory->withAttributes($arguments[1]);
+
+        return $factory;
     }
 
     protected function getFactoryFor($relationshipMethodName)
