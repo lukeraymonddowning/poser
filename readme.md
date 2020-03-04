@@ -103,6 +103,141 @@ public function user_has_customers()
 
 ...and watch the tests pass. Pretty nice, huh?
 
+#### Magic Bindings
+If your model relationship method name (ie: the 'customers()' method on our 'User' model) is the same
+or plural version of our Factory class (ie: 'CustomerFactory'), then we can take advantage of Magic Bindings
+in Poser.
+
+Let's take another look at our User/Customer example.
+
+```
+/** @test */
+public function user_has_customers()
+{
+    $user = UserFactory::new()
+        ->withCustomers(CustomerFactory::times(30))
+        ->create();
+
+    $this->assertCount(30, $user->customers);
+}
+```
+
+Poser is smart enough to be able to work out that 'withCustomers' is a reference to the CustomerFactory,
+and allows us to rewrite our test like this:
+
+```
+/** @test */
+public function user_has_customers()
+{
+    $user = UserFactory::new()
+        ->withCustomers(30)
+        ->create();
+
+    $this->assertCount(30, $user->customers);
+}
+```
+
+The first argument passed to 'withCustomers()' is the number of customers we want to create, in this case: 30.
+
+Imagine, for a contrived example, that every customer should be called "Joe Bloggs". We can pass a second
+argument to 'withCustomers()' that defines an associative array of column names and values, just like we
+do with the 'create()', 'make()' and 'withAttributes()' methods:
+
+```
+/** @test */
+public function user_has_customers()
+{
+    $user = UserFactory::new()
+        ->withCustomers(30, [
+            "name" => "Joe Bloggs"
+        ])
+        ->create();
+
+    $this->assertCount(30, $user->customers);
+}
+```
+
+For HasOne relationships, like our User's Address, we can do very much the same:
+
+```
+/** @test */
+public function user_has_address()
+{
+    $user = UserFactory::new()
+        ->withAddress()
+        ->create();
+
+    $this->assertNotEmpty($user->address);
+}
+```
+
+We can also pass an array of attributes, but in this case we pass it as the first argument:
+```
+/** @test */
+public function user_has_address()
+{
+    $user = UserFactory::new()
+        ->withAddress([
+            "line_1" => "1 Test Street" 
+        ])
+        ->create();
+
+    $this->assertNotEmpty($user->address);
+}
+```
+
+Let's now put this all together, and demonstrate how simple it is to world build in Poser. Imagine we
+want 10 Users, each with an Address and 20 customers. Each customer should have 5 books. That should 
+be 10 Users, 10 Addresses, 200 Customers and 1000 Books. Check it out:
+
+```
+/** @test */
+public function users_with_addresses_can_have_customers_with_books() {
+    UserFactory::times(10)
+               ->withAddress()
+               ->withCustomers(CustomerFactory::times(20)->withBooks(5))();
+
+    $this->assertCount(1000, Book::all());
+    $this->assertCount(200, Customer::all());
+    $this->assertCount(10, User::all());
+    $this->assertCount(10, Address::all());
+}
+```
+
+Let's break down this code. First, we ask the UserFactory to create 10 users, and pass it the
+'withAddress()' function. Poser is able to find the AddressFactory, so it automatically instantiates
+it for us and gives each user an Address.
+
+Next, we call 'withCustomers()'. Because we want to specify additional parameters for each Customer,
+we instantiate CustomerFactory directly, asking for 20 at a time. We then chain 'withBooks()' onto
+the CustomerFactory, simply passing the integer 5. Poser looks for a BookFactory, which is finds,
+and automatically calls 'BookFactory::times(5)' under the hood.
+
+Finally, we complete the statement by invoking the UserFactory with '()'. This is a shorthand syntax
+for calling 'create()' on the UserFactory.
+
+For reference, the same test using Laravel's built in factories looks like this:
+
+```
+/** @test */
+public function users_with_addresses_can_have_customers_with_books() {
+    $user = factory(User::class)->times(10)->create();
+    $user->each(function($user) {
+        $user->address()->save(factory(Address::class)->make());
+        $customers = factory(Customer::class)->times(20)->make();
+        $user->customers()->saveMany($customers);
+        $user->customers->each(function($customer) {
+            $customer->books()->saveMany(factory(Book::class)->times(5)->make());
+        });
+    });
+
+    $this->assertCount(1000, Book::all());
+    $this->assertCount(200, Customer::all());
+    $this->assertCount(10, User::all());
+    $this->assertCount(10, Address::all());
+}
+```
+
 ### Belongs To Relationships
 What if we want to describe the inverse, a BelongsTo relationship? Poser makes this easy too. Instead of 
 prepending 'with', we can prepend 'for'. Let's take another look at our examples. Say we wanted to 
