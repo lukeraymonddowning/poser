@@ -1,0 +1,24 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "contributors": [
+    {
+      "login": "AlanHolmes",
+      "name": "Alan Holmes",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/4289202?v=4",
+      "profile": "https://github.com/AlanHolmes",
+      "contributions": [
+        "code"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "projectName": "poser",
+  "projectOwner": "lukeraymonddowning",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "skipCi": true
+}
