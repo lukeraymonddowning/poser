@@ -42,8 +42,8 @@ class User extends Authenticatable
 ```
 
 To set up the factory for this, create a class (we suggest a 'Factories' directory in your 'tests' folder)
-called 'UserFactory' (you can also just call it 'User', but we think the 'Factory' suffix helps), and a class
-called 'CustomerFactory'. Both of these classes should extend the 'Poser/Factory' abstract class.
+called `UserFactory` (you can also just call it `User`, but we think the `Factory` suffix helps), and a class
+called `CustomerFactory`. Both of these classes should extend the `Poser/Factory` abstract class.
 
 Now, head to the test you want to write, and type the following:
 
@@ -60,10 +60,10 @@ public function user_has_customers()
 ```
 
 The test should pass with flying colors. Hurrah! Notice that we didn't have to implement the
-'withCustomers' method: Poser was able to intelligently decide what we were trying to do.
+`withCustomers()` method: Poser was able to intelligently decide what we were trying to do.
 
-For HasOne or HasMany relationships, you can simply prepend 'with' to the relationship method in
-the model (eg: the customers() method in the User model becomes 'withCustomers' in the tests),
+For `HasOne` or `HasMany` relationships, you can simply prepend `with` to the relationship method in
+the model (eg: the `customers()` method in the `User` model becomes `withCustomers` in the tests),
 and Poser will do the rest. 
 
 Let's add a little more complexity: each customer can own many books...
@@ -85,8 +85,8 @@ class Customer extends Model
 }
 ```
 
-So far, so good. Let's create another factory class, this time called 'BookFactory', 
-that again extends Poser's abstract 'Factory' class. That's all there is to it! Modify your original
+So far, so good. Let's create another factory class, this time called `BookFactory`, 
+that again extends Poser's abstract `Factory` class. That's all there is to it! Modify your original
 test to give our customers 5 books each...
 
 ```
@@ -107,11 +107,11 @@ public function user_has_customers()
 ...and watch the tests pass. Pretty nice, huh?
 
 #### Magic Bindings
-If your model relationship method name (ie: the 'customers()' method on our 'User' model) is the same
-or a plural version of our Factory class (ie: 'CustomerFactory'), then we can take advantage of Magic Bindings
+If your model relationship method name (ie: the `customers()` method on our `User` model) is the same
+or a plural version of our `Factory` class (ie: `CustomerFactory`), then we can take advantage of Magic Bindings
 in Poser.
 
-Let's take another look at our User/Customer example.
+Let's take another look at our `User`/`Customer` example.
 
 ```
 /** @test */
@@ -125,7 +125,7 @@ public function user_has_customers()
 }
 ```
 
-Poser is smart enough to be able to work out that 'withCustomers' is a reference to the CustomerFactory,
+Poser is smart enough to be able to work out that `withCustomers()` is a reference to the `CustomerFactory`,
 and allows us to rewrite our test like this:
 
 ```
@@ -140,11 +140,11 @@ public function user_has_customers()
 }
 ```
 
-The first argument passed to 'withCustomers()' is the number of customers we want to create, in this case: 30.
+The first argument passed to `withCustomers()` is the number of customers we want to create, in this case: `30`.
 
 Imagine, for a contrived example, that every customer should be called "Joe Bloggs". We can pass a second
-argument to 'withCustomers()' that defines an associative array of column names and values, just like we
-do with the 'create()', 'make()' and 'withAttributes()' methods:
+argument to `withCustomers()` that defines an associative array of column names and values, just like we
+do with the `create()`, `make()` and `withAttributes()` methods:
 
 ```
 /** @test */
@@ -160,7 +160,7 @@ public function user_has_customers()
 }
 ```
 
-For HasOne relationships, like our User's Address, we can do very much the same:
+For HasOne relationships, like our `User`'s Address, we can do very much the same:
 
 ```
 /** @test */
@@ -191,7 +191,7 @@ public function user_has_address()
 
 Let's now put this all together, and demonstrate how simple it is to world build in Poser. Imagine we
 want 10 Users, each with an Address and 20 customers. Each customer should have 5 books. That should 
-be 10 Users, 10 Addresses, 200 Customers and 1000 Books. Check it out:
+be 10 `User`s, 10 `Address`es, 200 `Customer`s and 1000 `Book`s. Check it out:
 
 ```
 /** @test */
@@ -208,16 +208,16 @@ public function users_with_addresses_can_have_customers_with_books() {
 ```
 
 Let's break down this code. First, we ask the UserFactory to create 10 users, and pass it the
-'withAddress()' function. Poser is able to find the AddressFactory, so it automatically instantiates
-it for us and gives each user an Address.
+`withAddress()` function. Poser is able to find the `AddressFactory`, so it automatically instantiates
+it for us and gives each user an `Address`.
 
-Next, we call 'withCustomers()'. Because we want to specify additional parameters for each Customer,
-we instantiate CustomerFactory directly, asking for 20 at a time. We then chain 'withBooks()' onto
-the CustomerFactory, simply passing the integer 5. Poser looks for a BookFactory, which is finds,
-and automatically calls 'BookFactory::times(5)' under the hood.
+Next, we call `withCustomers()`. Because we want to specify additional parameters for each `Customer`,
+we instantiate `CustomerFactory` directly, asking for `20` at a time. We then chain `withBooks()` onto
+the `CustomerFactory`, simply passing the integer `5`. Poser looks for a `BookFactory`, which is finds,
+and automatically calls `BookFactory::times(5)` under the hood.
 
-Finally, we complete the statement by invoking the UserFactory with '()'. This is a shorthand syntax
-for calling 'create()' on the UserFactory.
+Finally, we complete the statement by invoking the UserFactory with `()`. This is a shorthand syntax
+for calling `create()` on the `UserFactory`.
 
 For reference, the same test using Laravel's built in factories looks like this:
 
@@ -242,8 +242,8 @@ public function users_with_addresses_can_have_customers_with_books() {
 ```
 
 ### Belongs To Relationships
-What if we want to describe the inverse, a BelongsTo relationship? Poser makes this easy too. Instead of 
-prepending 'with', we can prepend 'for'. Let's take another look at our examples. Say we wanted to 
+What if we want to describe the inverse, a `BelongsTo` relationship? Poser makes this easy too. Instead of 
+prepending `with`, we can prepend `for`. Let's take another look at our examples. Say we wanted to 
 request that a customer is given a user. Simply do this:
 
 ```
@@ -319,59 +319,59 @@ As Poser makes use of the built in Laravel factory methods, you can use the `aft
 
 ### Factory API
 
-#### ::new()
+#### `::new()`
 Creates a new instance of the factory. If you only want to create one model, use this to instantiate the class.
 
-#### ::times($count)
+#### `::times($count)`
 Creates a new instance of the factory, but informs the factory that you will be creating multiple models.
 Use this to instantiate the class when you wish to create multiple entries in the database.
 
-#### ->create(array $attributes)
-Similar to the Laravel factory 'create' command, this will create the models, persisting them to the database.
+#### `->create(array $attributes)`
+Similar to the Laravel factory `create` command, this will create the models, persisting them to the database.
 You may pass an associative array of column names with desired values, which will be applied to the 
 created models.
 
-#### ->make(array $attributes)
-Similar to the Laravel factory 'make' command, this will make the models without persisting them to the 
+#### `->make(array $attributes)`
+Similar to the Laravel factory `make` command, this will make the models without persisting them to the 
 database. You may pass an associative array of column names with desired values, which will be applied to the 
 created models.
 
-#### ->withAttributes(array $attributes)
+#### `->withAttributes(array $attributes)`
 You may pass an associative array of column names with desired values, which will be applied to the 
 created models.
 
-#### ->state(string $state)
+#### `->state(string $state)`
 You may pass a factory state that you have defined in your laravel model factory, which will be applied
 to the created models.
 
-#### ->states(...$states)
-Similar to ->state(string $state), but allows you to pass in multiple states that will all be applied
+#### `->states(...$states)`
+Similar to `->state(string $state)`, but allows you to pass in multiple states that will all be applied
 to the created models.
 
 ### Things to note
 #### Models location
-By default, Poser looks for your models in the 'App' directory, which should be fine for most projects.
-If you have your models in a different directory, you can let Poser know about it by editing the 'models_directory'
-entry in the poser.php config file.
+By default, Poser looks for your models in the `App` directory, which should be fine for most projects.
+If you have your models in a different directory, you can let Poser know about it by editing the `models_directory`
+entry in the `poser.php` config file.
 
-If you need to override the model location for a single instance, you can override the '$modelName' static variable
+If you need to override the model location for a single instance, you can override the `$modelName` static variable
 in your Factory class, passing it the fully qualified class name of the corresponding model. 
 
 #### Factories location
-By default, Poser will search the 'Tests/Factories' directory for your Factory classes.
-If you have your Factories in a different directory (eg: 'Tests/Models/Factories'),
-you can let Poser know about it by editing the 'factories_directory' entry in the poser.php config
+By default, Poser will search the `Tests/Factories` directory for your Factory classes.
+If you have your Factories in a different directory (eg: `Tests/Models/Factories`),
+you can let Poser know about it by editing the `factories_directory` entry in the poser.php config
 file.
 
-#### The ->create() and ->make() commands
-You should call the create command at the end of the outermost Factory statement to cause it to persist to the
-database. You do not need to call create() or make() on nested Factory statements, as Poser will do this for you.
+#### The `->create()` and `->make()` commands
+You should call the `create` command at the end of the outermost Factory statement to cause it to persist to the
+database. You do not need to call `create()` or `make()` on nested Factory statements, as Poser will do this for you.
 
-The only exception to this is BelongsTo relationships, in which case you must call create() on nested Factory
+The only exception to this is BelongsTo relationships, in which case you must call `create()` on nested Factory
 statements.
 
-If you like terse syntax, you can replace ->create() with (), as the Factory __invoke function simply
-calls 'create()' under the hood:
+If you like terse syntax, you can replace `->create()` with `()`, as the Factory `__invoke` function simply
+calls `create()` under the hood:
 
 ```
 public function user_has_customers()
