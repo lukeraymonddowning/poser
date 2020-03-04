@@ -293,6 +293,19 @@ public function customer_is_active()
 }
 ```
 
+You may alternatively use the `as` method, which calls the `state` method under the hood
+```php
+/** @test */
+public function customer_is_active()
+{
+    $customer = CustomerFactory::new()
+        ->as('active')
+        ->create();
+
+    $this->assertTrue($customer->active);
+}
+```
+
 Like Laravel's Factories, there is also a `states` method to allow you to use multiple states
 
 ```php

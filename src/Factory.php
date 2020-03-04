@@ -218,6 +218,11 @@ abstract class Factory {
         return config('poser.models_directory', "App\\") . Str::beforeLast(class_basename($this), "Factory");
     }
 
+    public function as($state)
+    {
+        return $this->state($state);
+    }
+
     public function state($state)
     {
         $this->states[] = $state;
