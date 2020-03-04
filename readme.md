@@ -16,7 +16,7 @@ Next, publish the Poser config file by calling
 ## Usage
 Poser takes all of the boilerplate out of writing [class-based model factories](https://tighten.co/blog/tidy-up-your-tests-with-class-based-model-factories).
 To get started, install Poser and go to your test suite. Please note: Poser uses the database (obviously), so make sure
-you're test class extends Laravel's TestCase, not PhpUnit's.
+your test class extends Laravel's TestCase, not PhpUnit's.
 
 ### The Basics
 Let's imagine you have a user model that has many customers...
@@ -140,7 +140,7 @@ Similar to the Laravel factory 'make' command, this will make the models without
 database. You may pass an associative array of column names with desired values, which will be applied to the 
 created models.
 
-### ->withAttributes(array $attributes)
+#### ->withAttributes(array $attributes)
 You may pass an associative array of column names with desired values, which will be applied to the 
 created models.
 
