@@ -344,6 +344,12 @@ entry in the poser.php config file.
 If you need to override the model location for a single instance, you can override the '$modelName' static variable
 in your Factory class, passing it the fully qualified class name of the corresponding model. 
 
+#### Factories location
+By default, Poser will search the 'Tests/Factories' directory for your Factory classes.
+If you have your Factories in a different directory (eg: 'Tests/Models/Factories'),
+you can let Poser know about it by editing the 'factories_directory' entry in the poser.php config
+file.
+
 #### The ->create() and ->make() commands
 You should call the create command at the end of the outermost Factory statement to cause it to persist to the
 database. You do not need to call create() or make() on nested Factory statements, as Poser will do this for you.
