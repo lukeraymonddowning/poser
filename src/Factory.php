@@ -10,6 +10,7 @@ use Tests\Factories\UserFactory;
 use Illuminate\Support\Collection;
 use Tests\Factories\CustomerFactory;
 use Illuminate\Database\Eloquent\Model;
+use Lukeraymonddowning\Poser\Exceptions\ArgumentsNotSatisfiableException;
 
 abstract class Factory {
 
@@ -60,20 +61,25 @@ abstract class Factory {
 
     protected function handleSaveMethodRelationships($functionName, $arguments)
     {
-        $relationshipMethodName = Str::camel(Str::after($functionName, 'with'));
-
-        $modelData = $arguments[0];
-
-        $this->saveMethodRelationships[$relationshipMethodName] = $modelData;
+        $this->saveMethodRelationships[$this->getRelationshipMethodName($functionName, 'with')] = $this->getModelDataFromFunctionArguments($functionName, $arguments);
     }
 
     protected function handleBelongsToRelationships($functionName, $arguments)
     {
-        $relationshipMethodName = Str::camel(Str::after($functionName, 'for'));
+        $this->belongsToRelationships[$this->getRelationshipMethodName($functionName, 'for')] = $this->getModelDataFromFunctionArguments($functionName, $arguments);
+    }
 
-        $owningModel = $arguments[0];
+    private function getRelationshipMethodName($functionName, $prefix)
+    {
+        return Str::camel(Str::after($functionName, $prefix));
+    }
 
-        $this->belongsToRelationships[$relationshipMethodName] = $owningModel;
+    private function getModelDataFromFunctionArguments($functionName, $arguments)
+    {
+        if (isset($arguments[0]))
+            return $arguments[0];
+
+        throw new ArgumentsNotSatisfiableException();
     }
 
     public function withAttributes($attributes)
@@ -85,17 +91,11 @@ abstract class Factory {
 
     public function create($attributes = [])
     {
-        $result = $this->buildBy(function ($factory) use ($attributes) {
-            return $factory->make(array_merge($this->attributes, $attributes));
-        });
+        $result = $this->make($attributes);
 
-        if ($result instanceof Collection) {
-            $result->each(function ($model) {
-                $this->addBelongsToRelationships($model);
-            });
-        } else if ($result instanceof Model) {
-            $this->addBelongsToRelationships($result);
-        }
+        $this->performActionToModels($result, function($model) {
+            $this->addBelongsToRelationships($model);
+        });
 
         if ($result instanceof Collection) {
             $result->each(function ($model) {
@@ -116,25 +116,33 @@ abstract class Factory {
         return $result;
     }
 
+    private function performActionToModels($models, $closure)
+    {
+        if ($models instanceof Collection) {
+            $models->each(function ($model) use ($closure) {
+                $closure($model);
+            });
+        } else if ($models instanceof Model) {
+            $this->addBelongsToRelationships($models);
+        }
+    }
+
     protected function addSaveMethodRelationships($model)
     {
         $this->saveMethodRelationships->each(function ($relatedModels, $relationshipName) use ($model) {
             $models = $relatedModels instanceof Factory ? $relatedModels->make() : $relatedModels;
 
-            if ($models instanceof Collection) {
-                $model->{$relationshipName}()->saveMany($models);
-            } else if ($models instanceof Model) {
-                $model->{$relationshipName}()->save($models);
-            }
+            if ($models instanceof Model)
+                $models = collect([$models]);
+
+            $models->each(function ($relatedModel) use ($model, $relationshipName) {
+                $model->{$relationshipName}()->save($relatedModel);
+            });
 
             if ($relatedModels instanceof Factory) {
-                if ($models instanceof Collection) {
-                    $models->each(function ($model) use ($relatedModels) {
-                        $relatedModels->addSaveMethodRelationships($model);
-                    });
-                } else if ($models instanceof Model) {
-                    $relatedModels->addSaveMethodRelationships($models);
-                }
+                $models->each(function ($model) use ($relatedModels) {
+                    $relatedModels->addSaveMethodRelationships($model);
+                });
             }
         });
 
@@ -144,10 +152,7 @@ abstract class Factory {
     protected function addBelongsToRelationships($model)
     {
         $this->belongsToRelationships->each(function ($owningModel, $relationshipName) use ($model) {
-            if ($owningModel instanceof Factory) {
-                $owningModel = $owningModel->create();
-            }
-
+            $owningModel = $owningModel instanceof Factory ? $owningModel->create() : $owningModel;
             $model->{$relationshipName}()->associate($owningModel);
         });
 
