@@ -22,7 +22,8 @@ abstract class Factory {
         $count = 1,
         $saveMethodRelationships,
         $belongsToRelationships,
-        $attributes = [];
+        $attributes = [],
+        $states = [];
 
     public static function new()
     {
@@ -198,7 +199,8 @@ abstract class Factory {
 
     public function make($attributes = [])
     {
-        $factory = factory($this->getModelName());
+        $factory = factory($this->getModelName())
+            ->states($this->states);
 
         if ($this->count > 1)
             $factory->times($this->count);
@@ -214,6 +216,22 @@ abstract class Factory {
             return static::$modelName;
 
         return config('poser.models_directory', "App\\") . Str::beforeLast(class_basename($this), "Factory");
+    }
+
+    public function state($state)
+    {
+        $this->states[] = $state;
+
+        return $this;
+    }
+
+    public function states(...$states)
+    {
+        collect($states)->flatten()->each(function($state) {
+           $this->states[] = $state;
+        });
+
+        return $this;
     }
 
 }

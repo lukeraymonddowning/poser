@@ -256,6 +256,51 @@ public function customer_has_user()
 }
 ```
 
+### Factory States
+If you have setup any States in your laravel factories, then you can also use them with Poser.
+
+So if in your Laravel customer factory class you have the following states setup
+
+```php
+$factory->state(Customer::class, 'active', function (Faker $faker) {
+    return [
+        'active' => true,
+    ];
+});
+
+$factory->state(Customer::class, 'inactive', function (Faker $faker) {
+    return [
+        'active' => false,
+    ];
+});
+
+``` 
+
+Then you can use the `state` method to tell Poser to also use these factory states
+
+```php
+/** @test */
+public function customer_is_active()
+{
+    $customer = CustomerFactory::new()
+        ->state('active')
+        ->create();
+
+    $this->assertTrue($customer->active);
+}
+```
+
+Like Laravel's Factories, there is also a `states` method to allow you to use multiple states
+
+```php
+$customer = CustomerFactory::new()
+    ->states('state1', 'state2', 'etc')
+    ->create();
+
+```
+
+
+
 ### Factory API
 
 #### ::new()
