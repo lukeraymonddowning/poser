@@ -16,6 +16,9 @@ Next, publish the Poser config file by calling
 
 `php artisan vendor:publish`
 
+To get started quickly, we provide a `php artisan make:poser` command. You should pass the desired name
+of your factory as an argument. So the command to create the `UserFactory` would be `php artisan make:poser UserFactory`.
+
 ## Usage
 Poser takes all of the boilerplate out of writing [class-based model factories](https://tighten.co/blog/tidy-up-your-tests-with-class-based-model-factories).
 To get started, install Poser and go to your test suite. Please note: Poser uses the database (obviously), so make sure
@@ -43,7 +46,13 @@ class User extends Authenticatable
 
 To set up the factory for this, create a class (we suggest a 'Factories' directory in your 'tests' folder)
 called `UserFactory` (you can also just call it `User`, but we think the `Factory` suffix helps), and a class
-called `CustomerFactory`. Both of these classes should extend the `Poser/Factory` abstract class. You should also have `CustomerFactory` and `UserFactory` as entries in your `database/factories` directory ([standard Laravel stuff](https://laravel.com/docs/5.8/database-testing#writing-factories))
+called `CustomerFactory`. 
+
+Both of these classes should extend the `Poser/Factory` abstract class. Poser can take care of this for you via the `make:poser` command,
+so you can call `php artisan make:poser UserFactory` and `php artisan make:poser CustomerFactory`.
+
+You should also have `CustomerFactory` and `UserFactory` as entries in your `database/factories` directory ([standard Laravel stuff](https://laravel.com/docs/5.8/database-testing#writing-factories))
+
 
 Now, head to the test you want to write, and type the following:
 

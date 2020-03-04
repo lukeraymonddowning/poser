@@ -19,5 +19,11 @@ class PoserServiceProvider extends ServiceProvider {
         $this->publishes([
             __DIR__ . '/config/poser.php' => config_path('poser.php')
         ]);
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                CreatePoserFactory::class
+            ]);
+        }
     }
 }

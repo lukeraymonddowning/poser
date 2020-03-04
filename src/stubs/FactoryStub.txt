@@ -1,0 +1,9 @@
+<?php
+
+namespace {{ Namespace }};
+
+use Lukeraymonddowning\Poser\Factory;
+
+class {{ ClassName }} extends Factory {
+
+}
