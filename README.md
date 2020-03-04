@@ -43,7 +43,7 @@ class User extends Authenticatable
 
 To set up the factory for this, create a class (we suggest a 'Factories' directory in your 'tests' folder)
 called `UserFactory` (you can also just call it `User`, but we think the `Factory` suffix helps), and a class
-called `CustomerFactory`. Both of these classes should extend the `Poser/Factory` abstract class.
+called `CustomerFactory`. Both of these classes should extend the `Poser/Factory` abstract class. You should also have `CustomerFactory` and `UserFactory` as entries in your `database/factories` directory ([standard Laravel stuff](https://laravel.com/docs/5.8/database-testing#writing-factories))
 
 Now, head to the test you want to write, and type the following:
 
