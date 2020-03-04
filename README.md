@@ -5,7 +5,33 @@
 
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
 
-Laravel Class-based Model Factories in literal seconds!
+Laravel Class-based Model Factories in literal seconds! Write tests that look as sexy as this...
+
+```php
+/** @test */
+public function a_user_can_have_customers()
+{
+    UserFactory::times(20)
+               ->withAddress()
+               ->withCustomers(CustomerFactory::times(20)->withBooks(5))();
+
+    $this->assertCount(20 * 20 * 5, Book::all());
+}
+```
+...with a Factory that looks like this...
+
+```php
+namespace Tests\Factories;
+
+use Lukeraymonddowning\Poser\Factory;
+
+class UserFactory extends Factory {
+
+    // No need to write any code here
+    
+}
+```
+
 
 ## Install
 First, install into your Laravel project using composer.
