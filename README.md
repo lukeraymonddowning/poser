@@ -40,7 +40,7 @@ First, install into your Laravel project using composer.
 
 Next, publish the Poser config file by calling
 
-`php artisan vendor:publish`
+`php artisan vendor:publish --tag=poser`
 
 To get started quickly, we provide a `php artisan make:poser` command. You should pass the desired name
 of your factory as an argument. So the command to create the `UserFactory` would be `php artisan make:poser UserFactory`.
@@ -79,7 +79,7 @@ called `CustomerFactory`.
 Both of these classes should extend the `Poser/Factory` abstract class. Poser can take care of this for you via the `make:poser` command,
 so you can call `php artisan make:poser UserFactory` and `php artisan make:poser CustomerFactory`.
 
-You should also have `CustomerFactory` and `UserFactory` as entries in your `database/factories` directory ([standard Laravel stuff](https://laravel.com/docs/5.8/database-testing#writing-factories))
+You should also have `CustomerFactory` and `UserFactory` as entries in your `database/factories` directory ([standard Laravel stuff](https://laravel.com/docs/database-testing#writing-factories))
 
 
 Now, head to the test you want to write, and type the following:
