@@ -42,8 +42,10 @@ Next, publish the Poser config file by calling
 
 `php artisan vendor:publish --tag=poser`
 
-To get started quickly, we provide a `php artisan make:poser` command. You should pass the desired name
+To get started quickly, we provide a `php artisan make:poser` command. You may pass the desired name
 of your factory as an argument. So the command to create the `UserFactory` would be `php artisan make:poser UserFactory`.
+
+If you want to let Poser do all of the work, simply call `php artisan make:poser` to turn all the models defined in your poser.models_directory config entry into Poser Factories.
 
 More of a visual person? [Watch this video demonstration of Poser](https://vimeo.com/395500107)
 
