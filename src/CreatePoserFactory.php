@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\File;
 class CreatePoserFactory extends GeneratorCommand
 {
     protected $signature = 'make:poser {name : The name of the Poser Factory}
-                                       {--m|model= : The model that this factory is linked too}';
+                                       {--m|model= : The model that this factory is linked too}
+                                       {--f|factory : Also create the Laravel database factory}';
 
     protected $description = 'Creates a Poser Model Factory with the given name';
 
@@ -88,7 +89,32 @@ class CreatePoserFactory extends GeneratorCommand
         $this->info($name . " successfully created at " . $destination);
         $this->line("");
         $this->line("Remember, you should have a corresponding model, database factory and migration");
+
+        if ($this->option('factory')) {
+            $this->line("");
+            $this->line("Creating database factory");
+
+            $this->createFactory($linkedModelNamespace);
+        }
+
         $this->line("");
         $this->info("Please consider starring the repo at https://github.com/lukeraymonddowning/poser");
+    }
+
+    /**
+     * Create a database factory for the model.
+     *
+     * @param string $modelNamespace
+     *
+     * @return void
+     */
+    protected function createFactory($modelNamespace)
+    {
+        $factory = Str::studly(class_basename($modelNamespace));
+
+        $this->call('make:factory', [
+            'name' => "{$factory}Factory",
+            '--model' => $this->qualifyClass($this->getNameInput()),
+        ]);
     }
 }
