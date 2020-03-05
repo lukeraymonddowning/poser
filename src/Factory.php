@@ -88,11 +88,11 @@ abstract class Factory {
         if (isset($arguments[0]) && !is_int($arguments[0]) && !is_array($arguments[0]))
             return $arguments[0];
 
-        $factory = $this->getFactoryFor($this->getRelationshipMethodName($functionName));
+        $relationshipMethodName = $this->getRelationshipMethodName($functionName);
+        $factory = $this->getFactoryFor($relationshipMethodName);
 
         if (empty($factory))
-            throw new ArgumentsNotSatisfiableException();
-
+            throw new ArgumentsNotSatisfiableException(class_basename($this), $functionName, $relationshipMethodName);
 
         $factory = isset($arguments[0]) && is_int($arguments[0]) ? call_user_func($factory . '::times', $arguments[0]) : call_user_func($factory . '::new');
 
