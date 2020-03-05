@@ -56,7 +56,7 @@ your test class extends Laravel's TestCase, not PhpUnit's.
 
 ### The Basics
 Let's imagine you have a user model that has many customers...
-```
+```php
 <?php
 
 namespace App;
@@ -86,7 +86,7 @@ You should also have `CustomerFactory` and `UserFactory` as entries in your `dat
 
 Now, head to the test you want to write, and type the following:
 
-```
+```php
 /** @test */
 public function user_has_customers()
 {
@@ -107,7 +107,7 @@ and Poser will do the rest.
 
 Let's add a little more complexity: each customer can own many books...
 
-```
+```php
 class Customer extends Model
 {
 
@@ -128,7 +128,7 @@ So far, so good. Let's create another factory class, this time called `BookFacto
 that again extends Poser's abstract `Factory` class. That's all there is to it! Modify your original
 test to give our customers 5 books each...
 
-```
+```php
 /** @test */
 public function user_has_customers()
 {
@@ -152,7 +152,7 @@ in Poser.
 
 Let's take another look at our `User`/`Customer` example.
 
-```
+```php
 /** @test */
 public function user_has_customers()
 {
@@ -167,7 +167,7 @@ public function user_has_customers()
 Poser is smart enough to be able to work out that `withCustomers()` is a reference to the `CustomerFactory`,
 and allows us to rewrite our test like this:
 
-```
+```php
 /** @test */
 public function user_has_customers()
 {
@@ -185,7 +185,7 @@ Imagine, for a contrived example, that every customer should be called "Joe Blog
 argument to `withCustomers()` that defines an associative array of column names and values, just like we
 do with the `create()`, `make()` and `withAttributes()` methods:
 
-```
+```php
 /** @test */
 public function user_has_customers()
 {
@@ -201,7 +201,7 @@ public function user_has_customers()
 
 For HasOne relationships, like our `User`'s Address, we can do very much the same:
 
-```
+```php
 /** @test */
 public function user_has_address()
 {
@@ -214,7 +214,7 @@ public function user_has_address()
 ```
 
 We can also pass an array of attributes, but in this case we pass it as the first argument:
-```
+```php
 /** @test */
 public function user_has_address()
 {
@@ -232,7 +232,7 @@ Let's now put this all together, and demonstrate how simple it is to world build
 want 10 Users, each with an Address and 20 customers. Each customer should have 5 books. That should 
 be 10 `User`s, 10 `Address`es, 200 `Customer`s and 1000 `Book`s. Check it out:
 
-```
+```php
 /** @test */
 public function users_with_addresses_can_have_customers_with_books() {
     UserFactory::times(10)
@@ -260,7 +260,7 @@ for calling `create()` on the `UserFactory`.
 
 For reference, the same test using Laravel's built in factories looks like this:
 
-```
+```php
 /** @test */
 public function users_with_addresses_can_have_customers_with_books() {
     $user = factory(User::class)->times(10)->create();
@@ -285,7 +285,7 @@ What if we want to describe the inverse, a `BelongsTo` relationship? Poser makes
 prepending `with`, we can prepend `for`. Let's take another look at our examples. Say we wanted to 
 request that a customer is given a user. Simply do this:
 
-```
+```php
 /** @test */
 public function customer_has_user()
 {
@@ -412,7 +412,7 @@ statements.
 If you like terse syntax, you can replace `->create()` with `()`, as the Factory `__invoke` function simply
 calls `create()` under the hood:
 
-```
+```php
 public function user_has_customers()
 {
     $user = UserFactory::new()
