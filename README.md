@@ -363,10 +363,10 @@ Creates a new instance of the factory. If you only want to create one model, use
 Creates a new instance of the factory, but informs the factory that you will be creating multiple models.
 Use this to instantiate the class when you wish to create multiple entries in the database.
 
-#### `->create(array $attributes)`
+#### `->create(array $attributes)` or `()`
 Similar to the Laravel factory `create` command, this will create the models, persisting them to the database.
 You may pass an associative array of column names with desired values, which will be applied to the 
-created models.
+created models. You can optionally call create by invoking the Factory. This allows for a shorter syntax.
 
 #### `->make(array $attributes)`
 Similar to the Laravel factory `make` command, this will make the models without persisting them to the 
