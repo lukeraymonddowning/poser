@@ -377,7 +377,7 @@ created models.
 You may pass an associative array of column names with desired values, which will be applied to the 
 created models.
 
-#### `->state(string $state)`
+#### `->state(string $state)` or `->as(string $state)`
 You may pass a factory state that you have defined in your laravel model factory, which will be applied
 to the created models.
 
