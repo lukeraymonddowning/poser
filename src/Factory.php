@@ -121,7 +121,7 @@ abstract class Factory {
     private function generateFactoryName($relationshipMethodName, $suffix = "")
     {
         $factoryLocation = config('poser.factories_directory', "Tests\\Factories\\");
-        return  $factoryLocation . Str::title(Str::singular($relationshipMethodName)) . $suffix;
+        return  $factoryLocation . Str::studly(Str::singular($relationshipMethodName)) . $suffix;
     }
 
     public function withAttributes($attributes)
