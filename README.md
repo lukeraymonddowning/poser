@@ -252,7 +252,7 @@ it for us and gives each user an `Address`.
 
 Next, we call `withCustomers()`. Because we want to specify additional parameters for each `Customer`,
 we instantiate `CustomerFactory` directly, asking for `20` at a time. We then chain `withBooks()` onto
-the `CustomerFactory`, simply passing the integer `5`. Poser looks for a `BookFactory`, which is finds,
+the `CustomerFactory`, simply passing the integer `5`. Poser looks for a `BookFactory`, which it finds,
 and automatically calls `BookFactory::times(5)` under the hood.
 
 Finally, we complete the statement by invoking the UserFactory with `()`. This is a shorthand syntax
