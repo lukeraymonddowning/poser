@@ -92,7 +92,7 @@ abstract class Factory {
         $factory = $this->getFactoryFor($relationshipMethodName);
 
         if (empty($factory))
-            throw new ArgumentsNotSatisfiableException(class_basename($this), $functionName, $relationshipMethodName);
+            throw new ArgumentsNotSatisfiableException(class_basename($this), $functionName, $relationshipMethodName, [$this->generateFactoryName($relationshipMethodName), $this->generateFactoryName($relationshipMethodName, "Factory")]);
 
         $factory = isset($arguments[0]) && is_int($arguments[0]) ? call_user_func($factory . '::times', $arguments[0]) : call_user_func($factory . '::new');
 
@@ -107,19 +107,21 @@ abstract class Factory {
 
     protected function getFactoryFor($relationshipMethodName)
     {
-        $factoryLocation = config('poser.factories_directory', "Tests\\Factories\\");
-
-        $singularRelationship = Str::singular($relationshipMethodName);
-
-        if (class_exists($factoryLocation . Str::title($singularRelationship))) {
-            return $factoryLocation . Str::title($singularRelationship);
+        if (class_exists($this->generateFactoryName($relationshipMethodName))) {
+            return $this->generateFactoryName($relationshipMethodName);
         }
 
-        if (class_exists($factoryLocation . Str::title($singularRelationship . "Factory"))) {
-            return $factoryLocation . Str::title($singularRelationship . "Factory");
+        if (class_exists($this->generateFactoryName($relationshipMethodName, "Factory"))) {
+            return $this->generateFactoryName($relationshipMethodName, "Factory");
         }
 
         return null;
+    }
+
+    private function generateFactoryName($relationshipMethodName, $suffix = "")
+    {
+        $factoryLocation = config('poser.factories_directory', "Tests\\Factories\\");
+        return  $factoryLocation . Str::title(Str::singular($relationshipMethodName)) . $suffix;
     }
 
     public function withAttributes($attributes)
