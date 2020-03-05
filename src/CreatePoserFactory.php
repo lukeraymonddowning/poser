@@ -3,23 +3,24 @@
 namespace Lukeraymonddowning\Poser;
 
 use Illuminate\Support\Str;
-use Illuminate\Console\Command;
+use Illuminate\Console\GeneratorCommand;
 use Illuminate\Support\Facades\File;
 
-class CreatePoserFactory extends Command
+class CreatePoserFactory extends GeneratorCommand
 {
-    protected $signature = 'make:poser {name}';
+    protected $signature = 'make:poser {name : The name of the Poser Factory}
+                                       {--m|model= : The model that this factory is linked too}';
 
     protected $description = 'Creates a Poser Model Factory with the given name';
 
     /**
-     * Create a new command instance.
+     * Get the stub file for the generator.
      *
-     * @return void
+     * @return string
      */
-    public function __construct()
+    protected function getStub($stubVariant = null)
     {
-        parent::__construct();
+        return __DIR__.'/stubs/FactoryStub' . ($stubVariant ? '.' . $stubVariant : '') . '.txt';
     }
 
     /**
@@ -34,11 +35,18 @@ class CreatePoserFactory extends Command
         $this->info("Creating Poser Factory called " . $name);
 
         $factoriesDirectory = config('poser.factories_directory', 'Tests\\Factories');
+        $modelsDirectory = config('poser.models_directory', 'App\\');
+
+        $expectedModelNameSpace = '\\' . $modelsDirectory . Str::beforeLast($name, 'Factory');
+        $linkedModelNamespace = $this->option('model')
+            ? '\\' . $this->qualifyClass($this->option('model'))
+            : $expectedModelNameSpace;
 
         $destinationDirectory = base_path()."/".str_replace("\\", "/", $factoriesDirectory);
 
-        if (!File::exists($destinationDirectory))
+        if (!File::exists($destinationDirectory)) {
             File::makeDirectory($destinationDirectory);
+        }
 
         $destination = $destinationDirectory.$name.".php";
 
@@ -47,16 +55,33 @@ class CreatePoserFactory extends Command
             return;
         }
 
-        File::copy(__DIR__.'/stubs/FactoryStub.txt', $destination);
+        $stubVariant = null;
+        if ($expectedModelNameSpace !== $linkedModelNamespace) {
+            $stubVariant = 'model';
+        }
+
+        File::copy($this->getStub($stubVariant), $destination);
 
         $value = file_get_contents($destination);
 
         $namespace = str_replace('/', '\\', $factoriesDirectory);
-        if (Str::endsWith($namespace, '\\'))
+        if (Str::endsWith($namespace, '\\')) {
             $namespace = Str::beforeLast($namespace, '\\');
+        }
 
-        $valueWithNamespace = str_replace("{{ Namespace }}", $namespace, $value);
-        $valueFormatted = str_replace("{{ ClassName }}", $name, $valueWithNamespace);
+        $valueFormatted = str_replace(
+            [
+                "{{ Namespace }}",
+                "{{ ClassName }}",
+                "{{ ModelNamespace }}",
+            ],
+            [
+                $namespace,
+                $name,
+                $linkedModelNamespace,
+            ],
+            $value
+        );
 
         file_put_contents($destination, $valueFormatted);
 
