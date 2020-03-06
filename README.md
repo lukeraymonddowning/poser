@@ -469,6 +469,27 @@ When working with Many-to-Many relationships, you may want to store data on the 
 this method to do so, passing in an associative array of column names with desired values. This should
 be called on the related factory, not the root-level factory.
 
+### `php artisan make:poser` API
+
+If no arguments are passed to the command, Poser will attempt to create matching factories for every model in your 
+application. It does this by looking at your `poser.model_directory` config entry, and scanning for models in that given
+directory. You may call `make:poser` multiple times without fear of it overriding your existing factories; if it finds
+that a given factory already exists, it will simply skip over it.
+
+#### Individual Factories
+You may optionally pass a name to the command, which corresponds to the name of the factory you want to create. For
+instance, `php artisan make:poser UserFactory` would create a factory called `UserFactory` in the namespace defined
+in your `poser.factories_directory` config file.
+
+#### The `-m` or `-model` Flag
+If your model name is different to the name you wish to give your factory, you may pass a `-m` or `-model` flag, along 
+with the name of the model that the factory will correspond to. So `php artisan make:poser ClientFactory -m Customer`
+would create a factory called `ClientFactory`, but point it to the `Customer` model.
+
+#### The `-f` or `-factory` Flag
+You may pass `-f` or `-factory` to the command to optionally generate a corresponding [Laravel database factory](https://laravel.com/docs/database-testing#writing-factories). 
+The database factory will take the form `[modelName]Factory`.
+
 ### Things to note
 #### Models location
 By default, Poser looks for your models in the `App` directory, which should be fine for most projects.
