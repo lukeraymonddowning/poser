@@ -14,7 +14,8 @@ use phpDocumentor\Reflection\Types\Integer;
 use Lukeraymonddowning\Poser\Exceptions\ModelNotBuiltException;
 use Lukeraymonddowning\Poser\Exceptions\ArgumentsNotSatisfiableException;
 
-abstract class Factory {
+abstract class Factory
+{
 
     protected static $modelName = null;
     protected static $relationshipPrefixes = ['with', 'for'];
@@ -57,11 +58,13 @@ abstract class Factory {
     {
         if (Str::startsWith($name, 'with')) {
             $this->handleSaveMethodRelationships($name, $arguments);
+
             return $this;
         }
 
         if (Str::startsWith($name, 'for')) {
             $this->handleBelongsToRelationships($name, $arguments);
+
             return $this;
         }
 
@@ -75,12 +78,14 @@ abstract class Factory {
 
     protected function handleSaveMethodRelationships($functionName, $arguments)
     {
-        $this->saveMethodRelationships[$this->getRelationshipMethodName($functionName)] = $this->getModelDataFromFunctionArguments($functionName, $arguments);
+        $this->saveMethodRelationships[$this->getRelationshipMethodName($functionName)] = $this->getModelDataFromFunctionArguments($functionName,
+            $arguments);
     }
 
     protected function handleBelongsToRelationships($functionName, $arguments)
     {
-        $this->belongsToRelationships[$this->getRelationshipMethodName($functionName)] = $this->getModelDataFromFunctionArguments($functionName, $arguments);
+        $this->belongsToRelationships[$this->getRelationshipMethodName($functionName)] = $this->getModelDataFromFunctionArguments($functionName,
+            $arguments);
     }
 
     private function getRelationshipMethodName($functionName)
@@ -94,25 +99,30 @@ abstract class Factory {
 
     private function getModelDataFromFunctionArguments($functionName, $arguments)
     {
-        if (isset($arguments[0]) && !is_int($arguments[0]) && !is_array($arguments[0]))
+        if (isset($arguments[0]) && !is_int($arguments[0]) && !is_array($arguments[0])) {
             return $arguments[0];
+        }
 
         $relationshipMethodName = $this->getRelationshipMethodName($functionName);
         $factory = $this->getFactoryFor($relationshipMethodName);
 
-        if (empty($factory))
+        if (empty($factory)) {
             throw new ArgumentsNotSatisfiableException(class_basename($this), $functionName, $relationshipMethodName, [
                 $this->generateFactoryName($relationshipMethodName),
                 $this->generateFactoryName($relationshipMethodName, "Factory")
             ]);
+        }
 
-        $factory = isset($arguments[0]) && is_int($arguments[0]) ? call_user_func($factory . '::times', $arguments[0]) : call_user_func($factory . '::new');
+        $factory = isset($arguments[0]) && is_int($arguments[0]) ? call_user_func($factory . '::times',
+            $arguments[0]) : call_user_func($factory . '::new');
 
-        if (isset($arguments[0]) && is_array($arguments[0]))
+        if (isset($arguments[0]) && is_array($arguments[0])) {
             $factory->withAttributes($arguments[0]);
+        }
 
-        if (isset($arguments[1]) && is_array($arguments[1]))
+        if (isset($arguments[1]) && is_array($arguments[1])) {
             $factory->withAttributes($arguments[1]);
+        }
 
         return $factory;
     }
@@ -163,7 +173,7 @@ abstract class Factory {
             $result->each(function ($model) {
                 $model->save();
             });
-        } else if ($result instanceof Model) {
+        } elseif ($result instanceof Model) {
             $result->save();
         }
 
@@ -173,7 +183,7 @@ abstract class Factory {
             $result->each(function ($model) {
                 $this->addSaveMethodRelationships($model);
             });
-        } else if ($result instanceof Model) {
+        } elseif ($result instanceof Model) {
             $this->addSaveMethodRelationships($result);
         }
 
@@ -186,7 +196,7 @@ abstract class Factory {
             $models->each(function ($model) use ($closure) {
                 $closure($model);
             });
-        } else if ($models instanceof Model) {
+        } elseif ($models instanceof Model) {
             $this->addBelongsToRelationships($models);
         }
     }
@@ -197,8 +207,9 @@ abstract class Factory {
             $pivotAttributes = collect($relatedModels instanceof Factory ? $relatedModels->pivotAttributes : []);
             $models = $relatedModels instanceof Factory ? $relatedModels->make() : $relatedModels;
 
-            if ($models instanceof Model)
+            if ($models instanceof Model) {
                 $models = collect([$models]);
+            }
 
             $models->each(function ($relatedModel) use ($model, $relationshipName, $pivotAttributes) {
                 $model->{$relationshipName}()->save($relatedModel, $pivotAttributes->toArray());
@@ -226,13 +237,15 @@ abstract class Factory {
 
     public function make($attributes = [])
     {
-        if (empty($this->factory))
+        if (empty($this->factory)) {
             $this->factory = factory($this->getModelName());
+        }
 
         $this->factory->states($this->states);
 
-        if ($this->count > 1)
+        if ($this->count > 1) {
             $this->factory->times($this->count);
+        }
 
         $result = $this->factory->make(array_merge($this->attributes, $attributes));
 
@@ -241,8 +254,9 @@ abstract class Factory {
 
     protected function getModelName()
     {
-        if (!empty(static::$modelName))
+        if (!empty(static::$modelName)) {
             return static::$modelName;
+        }
 
         return config('poser.models_directory', "App\\") . Str::beforeLast(class_basename($this), "Factory");
     }
@@ -267,5 +281,4 @@ abstract class Factory {
 
         return $this;
     }
-
 }
