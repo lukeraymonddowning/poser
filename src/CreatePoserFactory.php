@@ -7,7 +7,8 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Database\Eloquent\Model;
 
-class CreatePoserFactory extends Command {
+class CreatePoserFactory extends Command
+{
 
     protected $signature = 'make:poser {name?}';
 
@@ -34,6 +35,7 @@ class CreatePoserFactory extends Command {
 
         if ($name) {
             $this->createFactory($name);
+
             return;
         }
 
@@ -48,8 +50,9 @@ class CreatePoserFactory extends Command {
 
         $destinationDirectory = base_path() . "/" . str_replace("\\", "/", $factoriesDirectory);
 
-        if (!File::exists($destinationDirectory))
+        if (!File::exists($destinationDirectory)) {
             File::makeDirectory($destinationDirectory);
+        }
 
         $destination = $destinationDirectory . $factoryName . ".php";
 
@@ -64,8 +67,9 @@ class CreatePoserFactory extends Command {
         $value = file_get_contents($destination);
 
         $namespace = str_replace('/', '\\', $factoriesDirectory);
-        if (Str::endsWith($namespace, '\\'))
+        if (Str::endsWith($namespace, '\\')) {
             $namespace = Str::beforeLast($namespace, '\\');
+        }
 
         $valueWithNamespace = str_replace("{{ Namespace }}", $namespace, $value);
         $valueFormatted = str_replace("{{ ClassName }}", $factoryName, $valueWithNamespace);

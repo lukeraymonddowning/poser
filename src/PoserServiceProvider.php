@@ -4,7 +4,8 @@ namespace Lukeraymonddowning\Poser;
 
 use Illuminate\Support\ServiceProvider;
 
-class PoserServiceProvider extends ServiceProvider {
+class PoserServiceProvider extends ServiceProvider
+{
 
     public function register()
     {
