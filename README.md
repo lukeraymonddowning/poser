@@ -503,6 +503,43 @@ public function user_has_customers()
 }
 ```
 
+### Troubleshooting
+#### I keep getting a `ModelNotBuiltException` when trying to access properties or functions on the model I created
+This exception is thrown when you have forgotten to call `create()` or `()` on the factory. As such, you're actually
+trying to access a property or function on the factory, not the model. Just pop `create()` or `()` on the end of the statement and it should all work as expected. Here's an example...
+
+```php
+/** @test */
+public function the_user_has_a_name() {
+    $user = UserFactory::new()->withAttributes([ 'name' => "John Doe" ])->withCustomers(10);
+    
+    $this->assertEquals("John Doe", $user->name); // Whoops! This will throw a ModelNotBuiltException
+}
+```
+
+...and here's the solution
+```php
+/** @test */
+public function the_user_has_a_name() {
+    $user = UserFactory::new()->withAttributes([ 'name' => "John Doe" ])
+        ->withCustomers(10)->create(); // <- note the call to `create()` at the end
+    
+    $this->assertEquals("John Doe", $user->name); // Hoorah! This will pass
+}
+```
+
+#### When using magic binding, I get an `ArgumentsNotSatisfiableException`
+This error is thrown when Poser cannot find a factory that satifies the requested relationship method call. So, imagine you called `UserFactory::new()->withCustomers(10)();`, but there was no CustomerFactory, Poser would throw this error.
+
+The other time this error can crop up is if your Parent Model's relationship method name is different to the Child Model name.
+To illustrate, imaging that we have a `UserFactory` that has a `clients()` method. That method returns a has-many relationship for the `Customer` model, and you have a Poser `CustomerFactory`.
+
+When we call `UserFactory::new()->withClients()()`, Poser understands that you're using the `clients()` method on the `User` model, but it can't find a corresponding `ClientFactory` (because, it is in fact called `CustomerFactory`). The solution to this is to resort to standard bindings. So our updated call would be:
+
+```php
+UserFactory::new()->withClients(CustomerFactory::times(10))();
+```
+
 ## Credits
 
 - [Luke Raymond Downing](https://github.com/lukeraymonddowning)
