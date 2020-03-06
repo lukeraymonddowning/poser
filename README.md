@@ -1,3 +1,7 @@
+<p align="center">
+<img src="https://github.com/lukeraymonddowning/poser/raw/master/poser-logo.png" width="150">
+</p>
+
 # Poser
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square)](#contributors-)
@@ -42,8 +46,10 @@ Next, publish the Poser config file by calling
 
 `php artisan vendor:publish --tag=poser`
 
-To get started quickly, we provide a `php artisan make:poser` command. You should pass the desired name
+To get started quickly, we provide a `php artisan make:poser` command. You may pass the desired name
 of your factory as an argument. So the command to create the `UserFactory` would be `php artisan make:poser UserFactory`.
+
+If you want to let Poser do all of the work, simply call `php artisan make:poser` to turn all the models defined in your poser.models_directory config entry into Poser Factories.
 
 More of a visual person? [Watch this video demonstration of Poser](https://vimeo.com/395500107)
 
@@ -54,7 +60,7 @@ your test class extends Laravel's TestCase, not PhpUnit's.
 
 ### The Basics
 Let's imagine you have a user model that has many customers...
-```
+```php
 <?php
 
 namespace App;
@@ -84,7 +90,7 @@ You should also have `CustomerFactory` and `UserFactory` as entries in your `dat
 
 Now, head to the test you want to write, and type the following:
 
-```
+```php
 /** @test */
 public function user_has_customers()
 {
@@ -105,7 +111,7 @@ and Poser will do the rest.
 
 Let's add a little more complexity: each customer can own many books...
 
-```
+```php
 class Customer extends Model
 {
 
@@ -126,7 +132,7 @@ So far, so good. Let's create another factory class, this time called `BookFacto
 that again extends Poser's abstract `Factory` class. That's all there is to it! Modify your original
 test to give our customers 5 books each...
 
-```
+```php
 /** @test */
 public function user_has_customers()
 {
@@ -150,7 +156,7 @@ in Poser.
 
 Let's take another look at our `User`/`Customer` example.
 
-```
+```php
 /** @test */
 public function user_has_customers()
 {
@@ -165,7 +171,7 @@ public function user_has_customers()
 Poser is smart enough to be able to work out that `withCustomers()` is a reference to the `CustomerFactory`,
 and allows us to rewrite our test like this:
 
-```
+```php
 /** @test */
 public function user_has_customers()
 {
@@ -183,7 +189,7 @@ Imagine, for a contrived example, that every customer should be called "Joe Blog
 argument to `withCustomers()` that defines an associative array of column names and values, just like we
 do with the `create()`, `make()` and `withAttributes()` methods:
 
-```
+```php
 /** @test */
 public function user_has_customers()
 {
@@ -199,7 +205,7 @@ public function user_has_customers()
 
 For HasOne relationships, like our `User`'s Address, we can do very much the same:
 
-```
+```php
 /** @test */
 public function user_has_address()
 {
@@ -212,7 +218,7 @@ public function user_has_address()
 ```
 
 We can also pass an array of attributes, but in this case we pass it as the first argument:
-```
+```php
 /** @test */
 public function user_has_address()
 {
@@ -230,7 +236,7 @@ Let's now put this all together, and demonstrate how simple it is to world build
 want 10 Users, each with an Address and 20 customers. Each customer should have 5 books. That should 
 be 10 `User`s, 10 `Address`es, 200 `Customer`s and 1000 `Book`s. Check it out:
 
-```
+```php
 /** @test */
 public function users_with_addresses_can_have_customers_with_books() {
     UserFactory::times(10)
@@ -250,7 +256,7 @@ it for us and gives each user an `Address`.
 
 Next, we call `withCustomers()`. Because we want to specify additional parameters for each `Customer`,
 we instantiate `CustomerFactory` directly, asking for `20` at a time. We then chain `withBooks()` onto
-the `CustomerFactory`, simply passing the integer `5`. Poser looks for a `BookFactory`, which is finds,
+the `CustomerFactory`, simply passing the integer `5`. Poser looks for a `BookFactory`, which it finds,
 and automatically calls `BookFactory::times(5)` under the hood.
 
 Finally, we complete the statement by invoking the UserFactory with `()`. This is a shorthand syntax
@@ -258,7 +264,7 @@ for calling `create()` on the `UserFactory`.
 
 For reference, the same test using Laravel's built in factories looks like this:
 
-```
+```php
 /** @test */
 public function users_with_addresses_can_have_customers_with_books() {
     $user = factory(User::class)->times(10)->create();
@@ -278,12 +284,85 @@ public function users_with_addresses_can_have_customers_with_books() {
 }
 ```
 
+### Belongs To Many Relationships
+Poser supports Many-to-Many relationships using the exact same `with[RelationshipMethodName]()` syntax you're now used to. 
+Let's take the commonly used example of a `User` that can have many `Role`s, and a `Role` that can have many `User`s.
+
+```php
+/** @test */
+public function a_user_can_have_many_roles() {
+    $user = UserFactory::new()->withRoles(3)();
+
+    $this->assertCount(3, $user->roles);
+}
+
+/** @test */
+public function a_role_can_have_many_users() {
+    $role = RoleFactory::new()->withUsers(5)();
+
+    $this->assertCount(5, $role->users);
+}
+```
+
+Poser also allows you to save data to your pivot table when handing Many-to-Many relationships using the `withPivotAttributes()` method:
+
+```php
+/** @test */
+public function a_user_can_have_many_roles() {
+    $expiry = now();
+    $user = UserFactory::new()->withRoles(RoleFactory::new()->withPivotAttributes([
+        'expires_at' => $expiry
+    ]))();
+
+    $this->assertDatabaseHas('role_user', [
+        'user_id' => $user->id,
+        'expires_at' => $expiry
+    ]);
+}
+```
+
+It is important to note that you should not use the `make()`, `create()` or `invoke()` methods on the relationship factory
+when adding pivot attributes, as Poser will have no way to access them when saving the models.
+
+```php
+$user = UserFactory::new()->withRoles(RoleFactory::new()->withPivotAttributes([
+    'expires_at' => $expiry
+])->make())(); // Don't do this
+
+$user = UserFactory::new()->withRoles(RoleFactory::new()->withPivotAttributes([
+    'expires_at' => $expiry
+]))(); // Do this instead
+```
+
+### Polymorphic Relationships
+Poser supports all polymorphic relationship types using the same `with[RelationshipMethodName]()` syntax you're now very
+used to. Imagine that both our `User` and `Customer` models can have `Comment`s. Your Poser tests might look something like
+this:
+
+```php
+/** @test */
+public function a_user_can_have_many_comments() {
+    $user = UserFactory::new()->withComments(10)();
+
+    $this->assertCount(10, $user->comments);
+}
+
+/** @test */
+public function a_customer_can_have_many_comments() {
+    $customer = CustomerFactory::new()->withComments(25)->forUser(UserFactory::new()())();
+
+    $this->assertCount(25, $customer->comments);
+}
+```
+
+Many to Many polymorphic relationships work in exactly the same way.
+
 ### Belongs To Relationships
-What if we want to describe the inverse, a `BelongsTo` relationship? Poser makes this easy too. Instead of 
+What if we want to create a `BelongsTo` relationship? Poser makes this easy too. Instead of 
 prepending `with`, we can prepend `for`. Let's take another look at our examples. Say we wanted to 
 request that a customer is given a user. Simply do this:
 
-```
+```php
 /** @test */
 public function customer_has_user()
 {
@@ -363,10 +442,10 @@ Creates a new instance of the factory. If you only want to create one model, use
 Creates a new instance of the factory, but informs the factory that you will be creating multiple models.
 Use this to instantiate the class when you wish to create multiple entries in the database.
 
-#### `->create(array $attributes)`
+#### `->create(array $attributes)` or `()`
 Similar to the Laravel factory `create` command, this will create the models, persisting them to the database.
 You may pass an associative array of column names with desired values, which will be applied to the 
-created models.
+created models. You can optionally call create by invoking the Factory. This allows for a shorter syntax.
 
 #### `->make(array $attributes)`
 Similar to the Laravel factory `make` command, this will make the models without persisting them to the 
@@ -377,13 +456,18 @@ created models.
 You may pass an associative array of column names with desired values, which will be applied to the 
 created models.
 
-#### `->state(string $state)`
+#### `->state(string $state)` or `->as(string $state)`
 You may pass a factory state that you have defined in your laravel model factory, which will be applied
 to the created models.
 
 #### `->states(...$states)`
 Similar to `->state(string $state)`, but allows you to pass in multiple states that will all be applied
 to the created models.
+
+#### `->withPivotAttributes(array $attributes)`
+When working with Many-to-Many relationships, you may want to store data on the pivot table. You may use
+this method to do so, passing in an associative array of column names with desired values. This should
+be called on the related factory, not the root-level factory.
 
 ### Things to note
 #### Models location
@@ -410,7 +494,7 @@ statements.
 If you like terse syntax, you can replace `->create()` with `()`, as the Factory `__invoke` function simply
 calls `create()` under the hood:
 
-```
+```php
 public function user_has_customers()
 {
     $user = UserFactory::new()
@@ -421,6 +505,43 @@ public function user_has_customers()
     $this->assertCount(30, $user->customers);
     $this->assertCount(150, Book::all());
 }
+```
+
+### Troubleshooting
+#### I keep getting a `ModelNotBuiltException` when trying to access properties or functions on the model I created
+This exception is thrown when you have forgotten to call `create()` or `()` on the factory. As such, you're actually
+trying to access a property or function on the factory, not the model. Just pop `create()` or `()` on the end of the statement and it should all work as expected. Here's an example...
+
+```php
+/** @test */
+public function the_user_has_a_name() {
+    $user = UserFactory::new()->withAttributes([ 'name' => "John Doe" ])->withCustomers(10);
+    
+    $this->assertEquals("John Doe", $user->name); // Whoops! This will throw a ModelNotBuiltException
+}
+```
+
+...and here's the solution
+```php
+/** @test */
+public function the_user_has_a_name() {
+    $user = UserFactory::new()->withAttributes([ 'name' => "John Doe" ])
+        ->withCustomers(10)->create(); // <- note the call to `create()` at the end
+    
+    $this->assertEquals("John Doe", $user->name); // Hoorah! This will pass
+}
+```
+
+#### When using magic binding, I get an `ArgumentsNotSatisfiableException`
+This error is thrown when Poser cannot find a factory that satifies the requested relationship method call. So, imagine you called `UserFactory::new()->withCustomers(10)();`, but there was no `CustomerFactory`, Poser would throw this error. The solution is to create the Factory. In this case, we could call `php artisan make:poser CustomerFactory` from the terminal to automatically create the factory for us.
+
+The other time this error can crop up is if your Parent Model's relationship method name is different to the Child Model name.
+To illustrate, imaging that we have a `UserFactory` that has a `clients()` method. That method returns a has-many relationship for the `Customer` model, and you have a Poser `CustomerFactory`.
+
+When we call `UserFactory::new()->withClients()()`, Poser understands that you're using the `clients()` method on the `User` model, but it can't find a corresponding `ClientFactory` (because, it is in fact called `CustomerFactory`). The solution to this is to resort to standard bindings. So our updated call would be:
+
+```php
+UserFactory::new()->withClients(CustomerFactory::times(10))();
 ```
 
 ## Credits
