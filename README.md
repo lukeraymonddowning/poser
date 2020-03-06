@@ -280,8 +280,26 @@ public function users_with_addresses_can_have_customers_with_books() {
 }
 ```
 
+### Belongs To Many Relationships
+Poser supports Many-to-Many relationships using the exact same `with[RelationshipMethodName]()` syntax you're now used to. 
+Let's take the commonly used example of a `User` that can have many `Role`s, and a `Role` that can have many `User`s.
+
+```php
+/** @test */
+public function a_user_can_have_many_roles() {
+    $user = UserFactory::new()->withRoles(3)();
+    $this->assertCount(3, $user->roles);
+}
+
+/** @test */
+public function a_role_can_have_many_users() {
+    $role = RoleFactory::new()->withUsers(5)();
+    $this->assertCount(5, $role->users);
+}
+```
+
 ### Belongs To Relationships
-What if we want to describe the inverse, a `BelongsTo` relationship? Poser makes this easy too. Instead of 
+What if we want to create a `BelongsTo` relationship? Poser makes this easy too. Instead of 
 prepending `with`, we can prepend `for`. Let's take another look at our examples. Say we wanted to 
 request that a customer is given a user. Simply do this:
 
