@@ -23,6 +23,7 @@ abstract class Factory {
         $saveMethodRelationships,
         $belongsToRelationships,
         $attributes = [],
+        $pivotAttributes = [],
         $states = [];
 
     public $factory;
@@ -92,7 +93,10 @@ abstract class Factory {
         $factory = $this->getFactoryFor($relationshipMethodName);
 
         if (empty($factory))
-            throw new ArgumentsNotSatisfiableException(class_basename($this), $functionName, $relationshipMethodName, [$this->generateFactoryName($relationshipMethodName), $this->generateFactoryName($relationshipMethodName, "Factory")]);
+            throw new ArgumentsNotSatisfiableException(class_basename($this), $functionName, $relationshipMethodName, [
+                $this->generateFactoryName($relationshipMethodName),
+                $this->generateFactoryName($relationshipMethodName, "Factory")
+            ]);
 
         $factory = isset($arguments[0]) && is_int($arguments[0]) ? call_user_func($factory . '::times', $arguments[0]) : call_user_func($factory . '::new');
 
@@ -121,12 +125,20 @@ abstract class Factory {
     private function generateFactoryName($relationshipMethodName, $suffix = "")
     {
         $factoryLocation = config('poser.factories_directory', "Tests\\Factories\\");
-        return  $factoryLocation . Str::studly(Str::singular($relationshipMethodName)) . $suffix;
+
+        return $factoryLocation . Str::studly(Str::singular($relationshipMethodName)) . $suffix;
     }
 
     public function withAttributes($attributes)
     {
         $this->attributes = $attributes;
+
+        return $this;
+    }
+
+    public function withPivotAttributes($attributes)
+    {
+        $this->pivotAttributes = $attributes;
 
         return $this;
     }
@@ -174,13 +186,14 @@ abstract class Factory {
     protected function addSaveMethodRelationships($model)
     {
         $this->saveMethodRelationships->each(function ($relatedModels, $relationshipName) use ($model) {
+            $pivotAttributes = collect($relatedModels instanceof Factory ? $relatedModels->pivotAttributes : []);
             $models = $relatedModels instanceof Factory ? $relatedModels->make() : $relatedModels;
 
             if ($models instanceof Model)
                 $models = collect([$models]);
 
-            $models->each(function ($relatedModel) use ($model, $relationshipName) {
-                $model->{$relationshipName}()->save($relatedModel);
+            $models->each(function ($relatedModel) use ($model, $relationshipName, $pivotAttributes) {
+                $model->{$relationshipName}()->save($relatedModel, $pivotAttributes->toArray());
             });
 
             if ($relatedModels instanceof Factory) {

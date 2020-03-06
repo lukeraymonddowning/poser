@@ -300,6 +300,36 @@ public function a_role_can_have_many_users() {
 }
 ```
 
+Poser also allows you to save data to your pivot table when handing Many-to-Many relationships using the `withPivotData()` method:
+
+```php
+/** @test */
+public function a_user_can_have_many_roles() {
+    $expiry = now();
+    $user = UserFactory::new()->withRoles(RoleFactory::new()->withPivotAttributes([
+        'expires_at' => $expiry
+    ]))();
+
+    $this->assertDatabaseHas('role_user', [
+        'user_id' => $user->id,
+        'expires_at' => $expiry
+    ]);
+}
+```
+
+It is important to note that you should not use the `make()`, `create()` or `invoke()` methods on the relationship factory
+when adding pivot attributes, as Poser will have no way to access them when saving the models.
+
+```php
+$user = UserFactory::new()->withRoles(RoleFactory::new()->withPivotAttributes([
+    'expires_at' => $expiry
+])->make())(); // Don't do this
+
+$user = UserFactory::new()->withRoles(RoleFactory::new()->withPivotAttributes([
+    'expires_at' => $expiry
+]))(); // Do this instead
+```
+
 ### Polymorphic Relationships
 Poser supports all polymorphic relationship types using the same `with[RelationshipMethodName]()` syntax you're now very
 used to. Imagine that both our `User` and `Customer` models can have `Comment`s. Your Poser tests might look something like
@@ -429,6 +459,11 @@ to the created models.
 #### `->states(...$states)`
 Similar to `->state(string $state)`, but allows you to pass in multiple states that will all be applied
 to the created models.
+
+#### `->withPivotAttributes(array $attributes)`
+When working with Many-to-Many relationships, you may want to store data on the pivot table. You may use
+this method to do so, passing in an associative array of column names with desired values. This should
+be called on the related factory, not the root-level factory.
 
 ### Things to note
 #### Models location
