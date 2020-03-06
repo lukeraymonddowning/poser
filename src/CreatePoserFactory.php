@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class CreatePoserFactory extends GeneratorCommand
 {
+
     protected $signature = 'make:poser {name? : The name of the Poser Factory}
                                        {--m|model= : The model that this factory is linked too}
                                        {--f|factory : Also create the Laravel database factory}';
@@ -22,7 +23,7 @@ class CreatePoserFactory extends GeneratorCommand
      */
     protected function getStub($stubVariant = null)
     {
-        return __DIR__.'/stubs/FactoryStub' . ($stubVariant ? '.' . $stubVariant : '') . '.txt';
+        return __DIR__ . '/stubs/FactoryStub' . ($stubVariant ? '.' . $stubVariant : '') . '.txt';
     }
 
     /**
@@ -50,7 +51,7 @@ class CreatePoserFactory extends GeneratorCommand
         $factoriesDirectory = config('poser.factories_directory', 'Tests\\Factories');
         $modelsDirectory = config('poser.models_directory', 'App\\');
 
-        $expectedModelNameSpace = '\\' . $modelsDirectory . Str::beforeLast($name, 'Factory');
+        $expectedModelNameSpace = '\\' . $modelsDirectory . Str::beforeLast($factoryName, 'Factory');
         $linkedModelNamespace = $this->option('model')
             ? '\\' . $this->qualifyClass($this->option('model'))
             : $expectedModelNameSpace;
@@ -107,7 +108,7 @@ class CreatePoserFactory extends GeneratorCommand
             $this->line("");
             $this->line("Creating database factory");
 
-            $this->createFactory($linkedModelNamespace);
+            $this->createDatabaseFactory($linkedModelNamespace);
         }
 
         $this->line("");
@@ -142,13 +143,13 @@ class CreatePoserFactory extends GeneratorCommand
      *
      * @return void
      */
-    protected function createFactory($modelNamespace)
+    protected function createDatabaseFactory($modelNamespace)
     {
         $factory = Str::studly(class_basename($modelNamespace));
 
         $this->call('make:factory', [
             'name' => "{$factory}Factory",
-            '--model' => $this->qualifyClass($this->getNameInput()),
+            '--model' => $this->qualifyClass($factory),
         ]);
     }
 }
