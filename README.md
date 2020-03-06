@@ -280,7 +280,7 @@ public function users_with_addresses_can_have_customers_with_books() {
 }
 ```
 
-### Belongs To Many
+### Belongs To Many Relationships
 Poser supports Many-to-Many relationships using the exact same `with[RelationshipMethodName]()` syntax you're now used to. 
 Let's take the commonly used example of a `User` that can have many `Role`s, and a `Role` that can have many `User`s.
 
