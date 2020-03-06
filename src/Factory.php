@@ -11,6 +11,7 @@ use Illuminate\Support\Collection;
 use Tests\Factories\CustomerFactory;
 use Illuminate\Database\Eloquent\Model;
 use phpDocumentor\Reflection\Types\Integer;
+use Lukeraymonddowning\Poser\Exceptions\ModelNotBuiltException;
 use Lukeraymonddowning\Poser\Exceptions\ArgumentsNotSatisfiableException;
 
 abstract class Factory {
@@ -56,13 +57,20 @@ abstract class Factory {
     {
         if (Str::startsWith($name, 'with')) {
             $this->handleSaveMethodRelationships($name, $arguments);
+            return $this;
         }
 
         if (Str::startsWith($name, 'for')) {
             $this->handleBelongsToRelationships($name, $arguments);
+            return $this;
         }
 
-        return $this;
+        throw new ModelNotBuiltException($this, $name, $this->getModelName());
+    }
+
+    public function __get($name)
+    {
+        throw new ModelNotBuiltException($this, $name, $this->getModelName());
     }
 
     protected function handleSaveMethodRelationships($functionName, $arguments)
