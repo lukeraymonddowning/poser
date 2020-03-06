@@ -529,7 +529,7 @@ public function the_user_has_a_name() {
 ```
 
 #### When using magic binding, I get an `ArgumentsNotSatisfiableException`
-This error is thrown when Poser cannot find a factory that satifies the requested relationship method call. So, imagine you called `UserFactory::new()->withCustomers(10)();`, but there was no CustomerFactory, Poser would throw this error.
+This error is thrown when Poser cannot find a factory that satifies the requested relationship method call. So, imagine you called `UserFactory::new()->withCustomers(10)();`, but there was no `CustomerFactory`, Poser would throw this error. The solution is to create the Factory. In this case, we could call `php artisan make:poser CustomerFactory` from the terminal to automatically create the factory for us.
 
 The other time this error can crop up is if your Parent Model's relationship method name is different to the Child Model name.
 To illustrate, imaging that we have a `UserFactory` that has a `clients()` method. That method returns a has-many relationship for the `Customer` model, and you have a Poser `CustomerFactory`.
