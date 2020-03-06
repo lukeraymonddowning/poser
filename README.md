@@ -288,15 +288,40 @@ Let's take the commonly used example of a `User` that can have many `Role`s, and
 /** @test */
 public function a_user_can_have_many_roles() {
     $user = UserFactory::new()->withRoles(3)();
+
     $this->assertCount(3, $user->roles);
 }
 
 /** @test */
 public function a_role_can_have_many_users() {
     $role = RoleFactory::new()->withUsers(5)();
+
     $this->assertCount(5, $role->users);
 }
 ```
+
+### Polymorphic Relationships
+Poser supports all polymorphic relationship types using the same `with[RelationshipMethodName]()` syntax you're now very
+used to. Imagine that both our `User` and `Customer` models can have `Comment`s. Your Poser tests might look something like
+this:
+
+```php
+/** @test */
+public function a_user_can_have_many_comments() {
+    $user = UserFactory::new()->withComments(10)();
+
+    $this->assertCount(10, $user->comments);
+}
+
+/** @test */
+public function a_customer_can_have_many_comments() {
+    $customer = CustomerFactory::new()->withComments(25)->forUser(UserFactory::new()())();
+
+    $this->assertCount(25, $customer->comments);
+}
+```
+
+Many to Many polymorphic relationships work in exactly the same way.
 
 ### Belongs To Relationships
 What if we want to create a `BelongsTo` relationship? Poser makes this easy too. Instead of 
