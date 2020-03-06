@@ -1,3 +1,7 @@
+<p align="center">
+<img src="https://raw.github.com/lukeraymonddowning/poser/master/poser-logo.svg" width="150">
+</p>
+
 # Poser
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square)](#contributors-)
