@@ -300,7 +300,7 @@ public function a_role_can_have_many_users() {
 }
 ```
 
-Poser also allows you to save data to your pivot table when handing Many-to-Many relationships using the `withPivotData()` method:
+Poser also allows you to save data to your pivot table when handing Many-to-Many relationships using the `withPivotAttributes()` method:
 
 ```php
 /** @test */
