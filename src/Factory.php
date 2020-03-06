@@ -161,6 +161,11 @@ abstract class Factory
         return $this;
     }
 
+    /**
+     * @param array $attributes
+     *
+     * @return \Illuminate\Support\Collection|\Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model[]|\Illuminate\Database\Eloquent\Model
+     */
     public function create($attributes = [])
     {
         $result = $this->make($attributes);
@@ -235,6 +240,11 @@ abstract class Factory
         return $this;
     }
 
+    /**
+     * @param array $attributes
+     *
+     * @return \Illuminate\Support\Collection|\Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model[]|\Illuminate\Database\Eloquent\Model
+     */
     public function make($attributes = [])
     {
         if (empty($this->factory)) {
