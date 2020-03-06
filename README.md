@@ -1,5 +1,5 @@
 <p align="center">
-<img src="https://raw.github.com/lukeraymonddowning/poser/master/poser-logo.svg" width="150">
+<img src="https://github.com/lukeraymonddowning/poser/raw/master/poser-logo.svg" width="150">
 </p>
 
 # Poser
