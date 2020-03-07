@@ -23,8 +23,8 @@ abstract class Factory
 
     protected
         $count = 1,
-        $saveMethodRelationships,
-        $belongsToRelationships,
+        $withRelationships,
+        $forRelationships,
         $attributes = [],
         $pivotAttributes = [],
         $states = [];
@@ -59,8 +59,8 @@ abstract class Factory
     public function __construct()
     {
         $this->factory = factory($this->getModelName());
-        $this->saveMethodRelationships = collect([]);
-        $this->belongsToRelationships = collect([]);
+        $this->withRelationships = collect([]);
+        $this->forRelationships = collect([]);
     }
 
     /**
@@ -79,13 +79,13 @@ abstract class Factory
     public function __call(string $name, array $arguments)
     {
         if (Str::startsWith($name, 'with')) {
-            $this->handleSaveMethodRelationships($name, $arguments);
+            $this->handleWithRelationship($name, $arguments);
 
             return $this;
         }
 
         if (Str::startsWith($name, 'for')) {
-            $this->handleBelongsToRelationships($name, $arguments);
+            $this->handleForRelationship($name, $arguments);
 
             return $this;
         }
@@ -190,14 +190,14 @@ abstract class Factory
         $result = $returnFirstCollectionResultAtEnd ? collect([$result]) : $result;
 
         $result->each(function ($model) {
-            $this->addBelongsToRelationships($model);
+            $this->buildAllForRelationships($model);
             $model->save();
         });
 
         $this->factory->callAfterCreating($returnFirstCollectionResultAtEnd ? $result->first() : $result);
 
         $result->each(function ($model) {
-            $this->addSaveMethodRelationships($model);
+            $this->buildAllWithRelationships($model);
         });
 
         return $returnFirstCollectionResultAtEnd ? $result->first() : $result;
@@ -221,15 +221,15 @@ abstract class Factory
         return $this->factory->states($this->states)->make(array_merge($this->attributes, $attributes));
     }
 
-    protected function handleSaveMethodRelationships(string $functionName, array $arguments)
+    protected function handleWithRelationship(string $functionName, array $arguments)
     {
-        $this->saveMethodRelationships[$this->getRelationshipMethodName($functionName)] = $this->getModelDataFromFunctionArguments($functionName,
+        $this->withRelationships[$this->getRelationshipMethodName($functionName)] = $this->buildRelationshipData($functionName,
             $arguments);
     }
 
-    protected function handleBelongsToRelationships(string $functionName, array $arguments)
+    protected function handleForRelationship(string $functionName, array $arguments)
     {
-        $this->belongsToRelationships[$this->getRelationshipMethodName($functionName)] = $this->getModelDataFromFunctionArguments($functionName,
+        $this->forRelationships[$this->getRelationshipMethodName($functionName)] = $this->buildRelationshipData($functionName,
             $arguments);
     }
 
@@ -242,14 +242,14 @@ abstract class Factory
         return Str::camel(Str::after($functionName, $prefix));
     }
 
-    private function getModelDataFromFunctionArguments(string $functionName, array $arguments)
+    private function buildRelationshipData(string $functionName, array $arguments)
     {
         if ($this->factoryShouldBeHandledManually($arguments)) {
             return $arguments[0];
         }
 
         $factory = call_user_func(
-            $this->getFactoryNameForRelationshipOrFail($functionName) . '::times',
+            $this->getFactoryNameFromFunctionNameOrFail($functionName) . '::times',
             isset($arguments[0]) && is_int($arguments[0]) ? $arguments[0] : 1
         );
 
@@ -267,33 +267,33 @@ abstract class Factory
         return isset($arguments[0]) && !is_int($arguments[0]) && !is_array($arguments[0]);
     }
 
-    protected function getFactoryNameForRelationshipOrFail(string $functionName)
+    protected function getFactoryNameFromFunctionNameOrFail(string $functionName)
     {
         $relationshipMethodName = $this->getRelationshipMethodName($functionName);
 
         return collect(["", "Factory"])->map(function ($suffix) use ($relationshipMethodName) {
-            return $this->generateFactoryName($relationshipMethodName, $suffix);
+            return $this->getFactoryName($relationshipMethodName, $suffix);
         })->filter(function ($class) {
             return class_exists($class);
         })->whenEmpty(function () use ($functionName, $relationshipMethodName) {
             throw new ArgumentsNotSatisfiableException(class_basename($this), $functionName,
                 $relationshipMethodName, [
-                    $this->generateFactoryName($relationshipMethodName),
-                    $this->generateFactoryName($relationshipMethodName, "Factory")
+                    $this->getFactoryName($relationshipMethodName),
+                    $this->getFactoryName($relationshipMethodName, "Factory")
                 ]);
         })->first();
     }
 
-    private function generateFactoryName(string $relationshipMethodName, string $suffix = "")
+    private function getFactoryName(string $relationshipMethodName, string $suffix = "")
     {
         $factoryLocation = config('poser.factories_directory', "Tests\\Factories\\");
 
         return $factoryLocation . Str::studly(Str::singular($relationshipMethodName)) . $suffix;
     }
 
-    protected function addSaveMethodRelationships($model)
+    protected function buildAllWithRelationships($model)
     {
-        $this->saveMethodRelationships->each(function ($relatedModels, $relationshipName) use ($model) {
+        $this->withRelationships->each(function ($relatedModels, $relationshipName) use ($model) {
             $models = $this->makeModels($relatedModels);
 
             if ($models instanceof Model) {
@@ -304,7 +304,7 @@ abstract class Factory
                 $model->{$relationshipName}()->save($relatedModel, $relatedModels->pivotAttributes ?? []);
 
                 if ($relatedModels instanceof Factory) {
-                    $relatedModels->addSaveMethodRelationships($relatedModel);
+                    $relatedModels->buildAllWithRelationships($relatedModel);
                 }
             });
         });
@@ -312,9 +312,9 @@ abstract class Factory
         return $this;
     }
 
-    protected function addBelongsToRelationships(Model $model)
+    protected function buildAllForRelationships(Model $model)
     {
-        $this->belongsToRelationships->each(function ($owningModel, $relationshipName) use ($model) {
+        $this->forRelationships->each(function ($owningModel, $relationshipName) use ($model) {
             $model->{$relationshipName}()->associate($this->createModels($owningModel));
         });
 
