@@ -227,6 +227,12 @@ abstract class Factory
         return $this->factory->states($this->states)->make(array_merge($this->attributes, $attributes));
     }
 
+    /**
+     * Prepares a `with[RelationshipName]` by parsing it and storing it until the factory calls `create()`.
+     *
+     * @param string $functionName The name of the function that was called by the user.
+     * @param array  $arguments    The arguments that were passed to the function.
+     */
     protected function handleWithRelationship(string $functionName, array $arguments)
     {
         $this->withRelationships[$this->getRelationshipMethodName($functionName)] = $this->buildRelationshipData(
@@ -235,6 +241,12 @@ abstract class Factory
         );
     }
 
+    /**
+     * Prepares a `for[RelationshipName]` by parsing it and storing it until the factory calls `create()`.
+     *
+     * @param string $functionName The name of the function that was called by the user.
+     * @param array  $arguments    The arguments that were passed to the function.
+     */
     protected function handleForRelationship(string $functionName, array $arguments)
     {
         $this->forRelationships[$this->getRelationshipMethodName($functionName)] = $this->buildRelationshipData(
@@ -243,6 +255,14 @@ abstract class Factory
         );
     }
 
+    /**
+     * Parses the given function name to calculate the relationship method that should exist
+     * on the factory's Model. For example, if `withCustomers` was passed to this function,
+     * `customers` would be returned.
+     *
+     * @param string $functionName The name of the function that was called by the user.
+     * @return string The relationship method that should exist on the Model.
+     */
     protected function getRelationshipMethodName(string $functionName)
     {
         $prefix = collect(static::$relationshipPrefixes)->filter(
@@ -254,6 +274,18 @@ abstract class Factory
         return Str::camel(Str::after($functionName, $prefix));
     }
 
+    /**
+     * Works out how a relationship method should be handled. If a Poser Factory, Laravel factory
+     * Model or Collection of models is passed as an argument, it will simply be returned.
+     * However, if an integer is passed, this function is in charge of working out the factory
+     * that should be returned, and using the integer to set the number of models that should be
+     * created.
+     *
+     * @param string $functionName The name of the relationship method that was called by the user.
+     * @param array  $arguments    Any arguments passed to the relationship method.
+     * @throws ArgumentsNotSatisfiableException
+     * @return mixed Usually a Poser Factory, but could be a Model or Collection of Models.
+     */
     protected function buildRelationshipData(string $functionName, array $arguments)
     {
         if ($this->factoryShouldBeHandledManually($arguments)) {
@@ -261,7 +293,7 @@ abstract class Factory
         }
 
         $factory = call_user_func(
-            $this->getFactoryNameFromFunctionNameOrFail($functionName) . '::times',
+            $this->getFactoryNameFromMethodNameOrFail($functionName) . '::times',
             isset($arguments[0]) && is_int($arguments[0]) ? $arguments[0] : 1
         );
 
@@ -278,14 +310,28 @@ abstract class Factory
         return $factory;
     }
 
-    protected function factoryShouldBeHandledManually($arguments)
+    /**
+     * Decides if the Poser factory should be handled manually or if an automated factory should be created.
+     *
+     * @param array $arguments The arguments passed to the relationship method.
+     * @return bool True if the factory should be handled manually, otherwise false.
+     */
+    protected function factoryShouldBeHandledManually(array $arguments)
     {
         return isset($arguments[0]) && !is_int($arguments[0]) && !is_array($arguments[0]);
     }
 
-    protected function getFactoryNameFromFunctionNameOrFail(string $functionName)
+    /**
+     * Given a function name, calculates the fully qualified Poser Factory name that matches and returns it.
+     * For example, `withCustomers()` should return the fully qualified `CustomerFactory`.
+     *
+     * @param string $methodName The name of the method that was called by the user.
+     * @throws ArgumentsNotSatisfiableException
+     * @return string The Poser factory class name that matches the function name.
+     */
+    protected function getFactoryNameFromMethodNameOrFail(string $methodName)
     {
-        $relationshipMethodName = $this->getRelationshipMethodName($functionName);
+        $relationshipMethodName = $this->getRelationshipMethodName($methodName);
 
         return collect(["", "Factory"])->map(
             function ($suffix) use ($relationshipMethodName) {
@@ -296,9 +342,9 @@ abstract class Factory
                 return class_exists($class);
             }
         )->whenEmpty(
-            function () use ($functionName, $relationshipMethodName) {
+            function () use ($methodName, $relationshipMethodName) {
                 throw new ArgumentsNotSatisfiableException(
-                    class_basename($this), $functionName,
+                    class_basename($this), $methodName,
                     $relationshipMethodName, [
                         $this->getFactoryName($relationshipMethodName),
                         $this->getFactoryName($relationshipMethodName, "Factory")
@@ -308,6 +354,13 @@ abstract class Factory
         )->first();
     }
 
+    /**
+     * Constructs and returns fully qualified Poser factory name.
+     *
+     * @param string $relationshipMethodName The relationship method found on the Laravel Model.
+     * @param string $suffix                 A suffix that should be applied to the Poser Factory name.
+     * @return string The constructed fully qualified Poser factory name.
+     */
     protected function getFactoryName(string $relationshipMethodName, string $suffix = "")
     {
         $factoryLocation = config('poser.factories_directory', "Tests\\Factories\\");
@@ -315,6 +368,13 @@ abstract class Factory
         return $factoryLocation . Str::studly(Str::singular($relationshipMethodName)) . $suffix;
     }
 
+    /**
+     * Iterates over the requested `with[RelationshipMethod]` relationships and adds them to the
+     * given model/s.
+     *
+     * @param Model|Collection $model A Model or collection of models that should be given the relationships.
+     * @return $this
+     */
     protected function buildAllWithRelationships($model)
     {
         $this->withRelationships->each(
@@ -340,6 +400,13 @@ abstract class Factory
         return $this;
     }
 
+    /**
+     * Iterates over the requested `for[RelationshipMethod]` relationships and adds them to the
+     * given model/s.
+     *
+     * @param Model|Collection $model A Model or collection of models that should be given the relationships.
+     * @return $this
+     */
     protected function buildAllForRelationships(Model $model)
     {
         $this->forRelationships->each(
@@ -353,6 +420,11 @@ abstract class Factory
         return $this;
     }
 
+    /**
+     * Returns that model class name that corresponds to this Poser factory.
+     *
+     * @return string
+     */
     protected function getModelName()
     {
         return static::$modelName ??

@@ -21,6 +21,6 @@ any protected properties or methods, you do not need to make any changes.
 - `handleSaveMethodRelationships` is now called `handleWithRelationship`.
 - `handleBelongsToRelatioships` is now called `handleForRelationship`.
 - `getModelDataFromFunctionArguments` is now called `buildRelationshipData`.
-- `getFactoryFor` is now called `getFactoryNameFromFunctionNameOrFail`. It will also now throw an `ArgumentsNotSatisfiableException` if it cannot find the corresponding factory.
+- `getFactoryFor` is now called `getFactoryNameFromMethodNameOrFail`. It will also now throw an `ArgumentsNotSatisfiableException` if it cannot find the corresponding factory.
 - `addSaveMethodRelationships` is now called `buildAllWithRelationships`.
 - `addBelongsToRelationships` is now called `buildAllForRelationships`.
