@@ -7,7 +7,7 @@ We accept contributions via Pull Requests on [Github](https://github.com/lukeray
 
 ## Pull Requests
 
-- **[PSR-2 Coding Standard](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-2-coding-style-guide.md)** - The easiest way to apply the conventions is to install [PHP Code Sniffer](http://pear.php.net/package/PHP_CodeSniffer).
+- **[PSR-12 Coding Standard](https://www.php-fig.org/psr/psr-12/)** - Your IDE most likely has support for this. For PHPStorm, check out [this helpful resource](https://blog.jetbrains.com/phpstorm/2019/11/phpstorm-2019-3-release/#psr)
 
 - **Add tests!** - Your patch won't be accepted if it doesn't have tests.
 
@@ -15,7 +15,7 @@ We accept contributions via Pull Requests on [Github](https://github.com/lukeray
 
 - **Consider our release cycle** - We try to follow [SemVer v2.0.0](http://semver.org/). Randomly breaking public APIs is not an option.
 
-- **Create feature branches** - Don't askef us to pull from your master branch.
+- **Create feature branches** - Don't ask us to pull from your master branch.
 
 - **One pull request per feature** - If you want to do more than one thing, send multiple pull requests.
 

@@ -119,21 +119,35 @@ class CreatePoserFactory extends GeneratorCommand
     {
         $this->info("Creating Factories from all Models...");
         collect(File::files(str_replace('\\', '/', config('poser.models_directory'))))
-            ->filter(function ($fileInfo) {
-                return class_exists(config('poser.models_directory') . File::name($fileInfo));
-            })->map(function ($fileInfo) {
-                return config('poser.models_directory') . File::name($fileInfo);
-            })->filter(function ($className) {
-                return is_subclass_of($className, Model::class);
-            })->map(function ($className) {
-                return Str::substr($className, Str::length(config('poser.models_directory')));
-            })->map(function ($modelType) {
-                return $modelType . "Factory";
-            })->filter(function ($factoryName) {
-                return !class_exists(config('poser.factories_directory', 'Tests\\Factories') . $factoryName);
-            })->each(function ($factoryName) {
-                $this->createFactory($factoryName);
-            });
+            ->filter(
+                function ($fileInfo) {
+                    return class_exists(config('poser.models_directory') . File::name($fileInfo));
+                }
+            )->map(
+                function ($fileInfo) {
+                    return config('poser.models_directory') . File::name($fileInfo);
+                }
+            )->filter(
+                function ($className) {
+                    return is_subclass_of($className, Model::class);
+                }
+            )->map(
+                function ($className) {
+                    return Str::substr($className, Str::length(config('poser.models_directory')));
+                }
+            )->map(
+                function ($modelType) {
+                    return $modelType . "Factory";
+                }
+            )->filter(
+                function ($factoryName) {
+                    return !class_exists(config('poser.factories_directory', 'Tests\\Factories') . $factoryName);
+                }
+            )->each(
+                function ($factoryName) {
+                    $this->createFactory($factoryName);
+                }
+            );
     }
 
     /**
@@ -147,9 +161,12 @@ class CreatePoserFactory extends GeneratorCommand
     {
         $factory = Str::studly(class_basename($modelNamespace));
 
-        $this->call('make:factory', [
-            'name' => "{$factory}Factory",
-            '--model' => $this->qualifyClass($factory),
-        ]);
+        $this->call(
+            'make:factory',
+            [
+                'name' => "{$factory}Factory",
+                '--model' => $this->qualifyClass($factory),
+            ]
+        );
     }
 }

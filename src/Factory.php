@@ -23,8 +23,8 @@ abstract class Factory
 
     protected
         $count = 1,
-        $saveMethodRelationships,
-        $belongsToRelationships,
+        $withRelationships,
+        $forRelationships,
         $attributes = [],
         $pivotAttributes = [],
         $states = [];
@@ -38,7 +38,7 @@ abstract class Factory
      */
     public static function new()
     {
-        return new static();
+        return self::times(1);
     }
 
     /**
@@ -48,7 +48,7 @@ abstract class Factory
      * @param int $count
      * @return static
      */
-    public static function times($count)
+    public static function times(int $count)
     {
         $factory = new static();
         $factory->count = $count;
@@ -58,8 +58,9 @@ abstract class Factory
 
     public function __construct()
     {
-        $this->saveMethodRelationships = collect([]);
-        $this->belongsToRelationships = collect([]);
+        $this->factory = factory($this->getModelName());
+        $this->withRelationships = collect([]);
+        $this->forRelationships = collect([]);
     }
 
     /**
@@ -70,21 +71,21 @@ abstract class Factory
      *
      * @return \Illuminate\Database\Eloquent\Collection|Model|Model[]|Collection
      */
-    public function __invoke($attributes = [])
+    public function __invoke(array $attributes = [])
     {
         return $this->create($attributes);
     }
 
-    public function __call($name, $arguments)
+    public function __call(string $name, array $arguments)
     {
         if (Str::startsWith($name, 'with')) {
-            $this->handleSaveMethodRelationships($name, $arguments);
+            $this->handleWithRelationship($name, $arguments);
 
             return $this;
         }
 
         if (Str::startsWith($name, 'for')) {
-            $this->handleBelongsToRelationships($name, $arguments);
+            $this->handleForRelationship($name, $arguments);
 
             return $this;
         }
@@ -92,7 +93,7 @@ abstract class Factory
         throw new ModelNotBuiltException($this, $name, $this->getModelName());
     }
 
-    public function __get($name)
+    public function __get(string $name)
     {
         throw new ModelNotBuiltException($this, $name, $this->getModelName());
     }
@@ -106,7 +107,7 @@ abstract class Factory
      *
      * @return $this
      */
-    public function withAttributes($attributes)
+    public function withAttributes(array $attributes)
     {
         $this->attributes = $attributes;
 
@@ -122,7 +123,7 @@ abstract class Factory
      *
      * @return $this
      */
-    public function withPivotAttributes($attributes)
+    public function withPivotAttributes(array $attributes)
     {
         $this->pivotAttributes = $attributes;
 
@@ -137,7 +138,7 @@ abstract class Factory
      *
      * @return $this
      */
-    public function as($state)
+    public function as(string $state)
     {
         return $this->state($state);
     }
@@ -150,11 +151,9 @@ abstract class Factory
      *
      * @return $this
      */
-    public function state($state)
+    public function state(string $state)
     {
-        $this->states[] = $state;
-
-        return $this;
+        return $this->states($state);
     }
 
     /**
@@ -167,9 +166,11 @@ abstract class Factory
      */
     public function states(...$states)
     {
-        collect($states)->flatten()->each(function ($state) {
-            $this->states[] = $state;
-        });
+        collect($states)->flatten()->each(
+            function ($state) {
+                $this->states[] = $state;
+            }
+        );
 
         return $this;
     }
@@ -183,33 +184,29 @@ abstract class Factory
      *
      * @return \Illuminate\Support\Collection|\Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model[]|\Illuminate\Database\Eloquent\Model
      */
-    public function create($attributes = [])
+    public function create(array $attributes = [])
     {
         $result = $this->make($attributes);
 
-        $this->performActionToModels($result, function ($model) {
-            $this->addBelongsToRelationships($model);
-        });
+        $returnFirstCollectionResultAtEnd = !$result instanceof Collection;
+        $result = $returnFirstCollectionResultAtEnd ? collect([$result]) : $result;
 
-        if ($result instanceof Collection) {
-            $result->each(function ($model) {
+        $result->each(
+            function ($model) {
+                $this->buildAllForRelationships($model);
                 $model->save();
-            });
-        } elseif ($result instanceof Model) {
-            $result->save();
-        }
+            }
+        );
 
-        $this->factory->callAfterCreating($result);
+        $this->factory->callAfterCreating($returnFirstCollectionResultAtEnd ? $result->first() : $result);
 
-        if ($result instanceof Collection) {
-            $result->each(function ($model) {
-                $this->addSaveMethodRelationships($model);
-            });
-        } elseif ($result instanceof Model) {
-            $this->addSaveMethodRelationships($result);
-        }
+        $result->each(
+            function ($model) {
+                $this->buildAllWithRelationships($model);
+            }
+        );
 
-        return $result;
+        return $returnFirstCollectionResultAtEnd ? $result->first() : $result;
     }
 
     /**
@@ -221,145 +218,216 @@ abstract class Factory
      *
      * @return \Illuminate\Support\Collection|\Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model[]|\Illuminate\Database\Eloquent\Model
      */
-    public function make($attributes = [])
+    public function make(array $attributes = [])
     {
-        if (empty($this->factory)) {
-            $this->factory = factory($this->getModelName());
-        }
-
-        $this->factory->states($this->states);
-
         if ($this->count > 1) {
             $this->factory->times($this->count);
         }
 
-        $result = $this->factory->make(array_merge($this->attributes, $attributes));
-
-        return $result;
+        return $this->factory->states($this->states)->make(array_merge($this->attributes, $attributes));
     }
 
-    protected function handleSaveMethodRelationships($functionName, $arguments)
+    /**
+     * Prepares a `with[RelationshipName]` by parsing it and storing it until the factory calls `create()`.
+     *
+     * @param string $functionName The name of the function that was called by the user.
+     * @param array  $arguments    The arguments that were passed to the function.
+     */
+    protected function handleWithRelationship(string $functionName, array $arguments)
     {
-        $this->saveMethodRelationships[$this->getRelationshipMethodName($functionName)] = $this->getModelDataFromFunctionArguments($functionName,
-            $arguments);
+        $this->withRelationships[$this->getRelationshipMethodName($functionName)] = $this->buildRelationshipData(
+            $functionName,
+            $arguments
+        );
     }
 
-    protected function handleBelongsToRelationships($functionName, $arguments)
+    /**
+     * Prepares a `for[RelationshipName]` by parsing it and storing it until the factory calls `create()`.
+     *
+     * @param string $functionName The name of the function that was called by the user.
+     * @param array  $arguments    The arguments that were passed to the function.
+     */
+    protected function handleForRelationship(string $functionName, array $arguments)
     {
-        $this->belongsToRelationships[$this->getRelationshipMethodName($functionName)] = $this->getModelDataFromFunctionArguments($functionName,
-            $arguments);
+        $this->forRelationships[$this->getRelationshipMethodName($functionName)] = $this->buildRelationshipData(
+            $functionName,
+            $arguments
+        );
     }
 
-    private function getRelationshipMethodName($functionName)
+    /**
+     * Parses the given function name to calculate the relationship method that should exist
+     * on the factory's Model. For example, if `withCustomers` was passed to this function,
+     * `customers` would be returned.
+     *
+     * @param string $functionName The name of the function that was called by the user.
+     * @return string The relationship method that should exist on the Model.
+     */
+    protected function getRelationshipMethodName(string $functionName)
     {
-        $prefix = collect(static::$relationshipPrefixes)->filter(function ($prefix) use ($functionName) {
-            return Str::contains($functionName, $prefix);
-        })->first();
+        $prefix = collect(static::$relationshipPrefixes)->filter(
+            function ($prefix) use ($functionName) {
+                return Str::contains($functionName, $prefix);
+            }
+        )->first();
 
         return Str::camel(Str::after($functionName, $prefix));
     }
 
-    private function getModelDataFromFunctionArguments($functionName, $arguments)
+    /**
+     * Works out how a relationship method should be handled. If a Poser Factory, Laravel factory
+     * Model or Collection of models is passed as an argument, it will simply be returned.
+     * However, if an integer is passed, this function is in charge of working out the factory
+     * that should be returned, and using the integer to set the number of models that should be
+     * created.
+     *
+     * @param string $functionName The name of the relationship method that was called by the user.
+     * @param array  $arguments    Any arguments passed to the relationship method.
+     * @throws ArgumentsNotSatisfiableException
+     * @return mixed Usually a Poser Factory, but could be a Model or Collection of Models.
+     */
+    protected function buildRelationshipData(string $functionName, array $arguments)
     {
-        if (isset($arguments[0]) && !is_int($arguments[0]) && !is_array($arguments[0])) {
+        if ($this->factoryShouldBeHandledManually($arguments)) {
             return $arguments[0];
         }
 
-        $relationshipMethodName = $this->getRelationshipMethodName($functionName);
-        $factory = $this->getFactoryFor($relationshipMethodName);
+        $factory = call_user_func(
+            $this->getFactoryNameFromMethodNameOrFail($functionName) . '::times',
+            isset($arguments[0]) && is_int($arguments[0]) ? $arguments[0] : 1
+        );
 
-        if (empty($factory)) {
-            throw new ArgumentsNotSatisfiableException(class_basename($this), $functionName, $relationshipMethodName, [
-                $this->generateFactoryName($relationshipMethodName),
-                $this->generateFactoryName($relationshipMethodName, "Factory")
-            ]);
-        }
-
-        $factory = isset($arguments[0]) && is_int($arguments[0]) ? call_user_func($factory . '::times',
-            $arguments[0]) : call_user_func($factory . '::new');
-
-        if (isset($arguments[0]) && is_array($arguments[0])) {
-            $factory->withAttributes($arguments[0]);
-        }
-
-        if (isset($arguments[1]) && is_array($arguments[1])) {
-            $factory->withAttributes($arguments[1]);
-        }
+        collect($arguments)->filter(
+            function ($argument) {
+                return is_array($argument);
+            }
+        )->first(
+            function ($attributes) use ($factory) {
+                $factory->withAttributes($attributes);
+            }
+        );
 
         return $factory;
     }
 
-    protected function getFactoryFor($relationshipMethodName)
+    /**
+     * Decides if the Poser factory should be handled manually or if an automated factory should be created.
+     *
+     * @param array $arguments The arguments passed to the relationship method.
+     * @return bool True if the factory should be handled manually, otherwise false.
+     */
+    protected function factoryShouldBeHandledManually(array $arguments)
     {
-        if (class_exists($this->generateFactoryName($relationshipMethodName))) {
-            return $this->generateFactoryName($relationshipMethodName);
-        }
-
-        if (class_exists($this->generateFactoryName($relationshipMethodName, "Factory"))) {
-            return $this->generateFactoryName($relationshipMethodName, "Factory");
-        }
-
-        return null;
+        return isset($arguments[0]) && !is_int($arguments[0]) && !is_array($arguments[0]);
     }
 
-    private function generateFactoryName($relationshipMethodName, $suffix = "")
+    /**
+     * Given a function name, calculates the fully qualified Poser Factory name that matches and returns it.
+     * For example, `withCustomers()` should return the fully qualified `CustomerFactory`.
+     *
+     * @param string $methodName The name of the method that was called by the user.
+     * @throws ArgumentsNotSatisfiableException
+     * @return string The Poser factory class name that matches the function name.
+     */
+    protected function getFactoryNameFromMethodNameOrFail(string $methodName)
+    {
+        $relationshipMethodName = $this->getRelationshipMethodName($methodName);
+
+        return collect(["", "Factory"])->map(
+            function ($suffix) use ($relationshipMethodName) {
+                return $this->getFactoryName($relationshipMethodName, $suffix);
+            }
+        )->filter(
+            function ($class) {
+                return class_exists($class);
+            }
+        )->whenEmpty(
+            function () use ($methodName, $relationshipMethodName) {
+                throw new ArgumentsNotSatisfiableException(
+                    class_basename($this), $methodName,
+                    $relationshipMethodName, [
+                        $this->getFactoryName($relationshipMethodName),
+                        $this->getFactoryName($relationshipMethodName, "Factory")
+                    ]
+                );
+            }
+        )->first();
+    }
+
+    /**
+     * Constructs and returns fully qualified Poser factory name.
+     *
+     * @param string $relationshipMethodName The relationship method found on the Laravel Model.
+     * @param string $suffix                 A suffix that should be applied to the Poser Factory name.
+     * @return string The constructed fully qualified Poser factory name.
+     */
+    protected function getFactoryName(string $relationshipMethodName, string $suffix = "")
     {
         $factoryLocation = config('poser.factories_directory', "Tests\\Factories\\");
 
         return $factoryLocation . Str::studly(Str::singular($relationshipMethodName)) . $suffix;
     }
 
-    private function performActionToModels($models, $closure)
+    /**
+     * Iterates over the requested `with[RelationshipMethod]` relationships and adds them to the
+     * given model/s.
+     *
+     * @param Model|Collection $model A Model or collection of models that should be given the relationships.
+     * @return $this
+     */
+    protected function buildAllWithRelationships($model)
     {
-        if ($models instanceof Collection) {
-            $models->each(function ($model) use ($closure) {
-                $closure($model);
-            });
-        } elseif ($models instanceof Model) {
-            $this->addBelongsToRelationships($models);
-        }
-    }
+        $this->withRelationships->each(
+            function ($relatedModels, $relationshipName) use ($model) {
+                $models = $relatedModels instanceof Factory ? $relatedModels->make() : $relatedModels;
 
-    protected function addSaveMethodRelationships($model)
-    {
-        $this->saveMethodRelationships->each(function ($relatedModels, $relationshipName) use ($model) {
-            $pivotAttributes = collect($relatedModels instanceof Factory ? $relatedModels->pivotAttributes : []);
-            $models = $relatedModels instanceof Factory ? $relatedModels->make() : $relatedModels;
+                if ($models instanceof Model) {
+                    $models = collect([$models]);
+                }
 
-            if ($models instanceof Model) {
-                $models = collect([$models]);
+                $models->each(
+                    function ($relatedModel) use ($model, $relationshipName, $relatedModels) {
+                        $model->{$relationshipName}()->save($relatedModel, $relatedModels->pivotAttributes ?? []);
+
+                        if ($relatedModels instanceof Factory) {
+                            $relatedModels->buildAllWithRelationships($relatedModel);
+                        }
+                    }
+                );
             }
-
-            $models->each(function ($relatedModel) use ($model, $relationshipName, $pivotAttributes) {
-                $model->{$relationshipName}()->save($relatedModel, $pivotAttributes->toArray());
-            });
-
-            if ($relatedModels instanceof Factory) {
-                $models->each(function ($model) use ($relatedModels) {
-                    $relatedModels->addSaveMethodRelationships($model);
-                });
-            }
-        });
+        );
 
         return $this;
     }
 
-    protected function addBelongsToRelationships($model)
+    /**
+     * Iterates over the requested `for[RelationshipMethod]` relationships and adds them to the
+     * given model/s.
+     *
+     * @param Model|Collection $model A Model or collection of models that should be given the relationships.
+     * @return $this
+     */
+    protected function buildAllForRelationships(Model $model)
     {
-        $this->belongsToRelationships->each(function ($owningModel, $relationshipName) use ($model) {
-            $owningModel = $owningModel instanceof Factory ? $owningModel->create() : $owningModel;
-            $model->{$relationshipName}()->associate($owningModel);
-        });
+        $this->forRelationships->each(
+            function ($owningModel, $relationshipName) use ($model) {
+                $model->{$relationshipName}()->associate(
+                    $owningModel instanceof Factory ? $owningModel->create() : $owningModel
+                );
+            }
+        );
 
         return $this;
     }
 
+    /**
+     * Returns that model class name that corresponds to this Poser factory.
+     *
+     * @return string
+     */
     protected function getModelName()
     {
-        if (!empty(static::$modelName)) {
-            return static::$modelName;
-        }
-
-        return config('poser.models_directory', "App\\") . Str::beforeLast(class_basename($this), "Factory");
+        return static::$modelName ??
+            config('poser.models_directory', "App\\") . Str::beforeLast(class_basename($this), "Factory");
     }
 }
