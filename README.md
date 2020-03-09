@@ -232,6 +232,22 @@ public function user_has_address()
 }
 ```
 
+Sometimes, `with[RelationshipMethodName]` might not be the most readable choice. 
+Poser also supports the `has[RelationshipMethodName]` syntax, like so:
+```php
+/** @test */
+public function user_has_address()
+{
+    $user = UserFactory::new()
+        ->hasAddress([
+            "line_1" => "1 Test Street" 
+        ])
+        ->create();
+
+    $this->assertNotEmpty($user->address);
+}
+```
+
 Let's now put this all together, and demonstrate how simple it is to world build in Poser. Imagine we
 want 10 Users, each with an Address and 20 customers. Each customer should have 5 books. That should 
 be 10 `User`s, 10 `Address`es, 200 `Customer`s and 1000 `Book`s. Check it out:
@@ -240,7 +256,7 @@ be 10 `User`s, 10 `Address`es, 200 `Customer`s and 1000 `Book`s. Check it out:
 /** @test */
 public function users_with_addresses_can_have_customers_with_books() {
     UserFactory::times(10)
-               ->withAddress()
+               ->hasAddress()
                ->withCustomers(CustomerFactory::times(20)->withBooks(5))();
 
     $this->assertCount(1000, Book::all());
@@ -251,7 +267,7 @@ public function users_with_addresses_can_have_customers_with_books() {
 ```
 
 Let's break down this code. First, we ask the UserFactory to create 10 users, and pass it the
-`withAddress()` function. Poser is able to find the `AddressFactory`, so it automatically instantiates
+`hasAddress()` function. Poser is able to find the `AddressFactory`, so it automatically instantiates
 it for us and gives each user an `Address`.
 
 Next, we call `withCustomers()`. Because we want to specify additional parameters for each `Customer`,
@@ -285,7 +301,8 @@ public function users_with_addresses_can_have_customers_with_books() {
 ```
 
 ### Belongs To Many Relationships
-Poser supports Many-to-Many relationships using the exact same `with[RelationshipMethodName]()` syntax you're now used to. 
+Poser supports Many-to-Many relationships using the exact same `with[RelationshipMethodName]()` or `has[RelationshipMethodName]()` 
+syntax you're now used to. 
 Let's take the commonly used example of a `User` that can have many `Role`s, and a `Role` that can have many `User`s.
 
 ```php
@@ -298,7 +315,7 @@ public function a_user_can_have_many_roles() {
 
 /** @test */
 public function a_role_can_have_many_users() {
-    $role = RoleFactory::new()->withUsers(5)();
+    $role = RoleFactory::new()->hasUsers(5)();
 
     $this->assertCount(5, $role->users);
 }
@@ -335,8 +352,8 @@ $user = UserFactory::new()->withRoles(RoleFactory::new()->withPivotAttributes([
 ```
 
 ### Polymorphic Relationships
-Poser supports all polymorphic relationship types using the same `with[RelationshipMethodName]()` syntax you're now very
-used to. Imagine that both our `User` and `Customer` models can have `Comment`s. Your Poser tests might look something like
+Poser supports all polymorphic relationship types using the same `with[RelationshipMethodName]()` or `has[RelationshipMethodName]()` 
+syntax you're now very used to. Imagine that both our `User` and `Customer` models can have `Comment`s. Your Poser tests might look something like
 this:
 
 ```php

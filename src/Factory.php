@@ -19,7 +19,7 @@ abstract class Factory
 
     protected static
         $modelName = null,
-        $relationshipPrefixes = ['with', 'for'];
+        $relationshipPrefixes = ['with', 'has', 'for'];
 
     protected
         $count = 1,
@@ -78,7 +78,7 @@ abstract class Factory
 
     public function __call(string $name, array $arguments)
     {
-        if (Str::startsWith($name, 'with')) {
+        if (Str::startsWith($name, ['with', 'has'])) {
             $this->handleWithRelationship($name, $arguments);
 
             return $this;
