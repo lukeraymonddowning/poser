@@ -243,7 +243,7 @@ abstract class Factory
         );
     }
 
-    private function getRelationshipMethodName(string $functionName)
+    protected function getRelationshipMethodName(string $functionName)
     {
         $prefix = collect(static::$relationshipPrefixes)->filter(
             function ($prefix) use ($functionName) {
@@ -254,7 +254,7 @@ abstract class Factory
         return Str::camel(Str::after($functionName, $prefix));
     }
 
-    private function buildRelationshipData(string $functionName, array $arguments)
+    protected function buildRelationshipData(string $functionName, array $arguments)
     {
         if ($this->factoryShouldBeHandledManually($arguments)) {
             return $arguments[0];
@@ -278,7 +278,7 @@ abstract class Factory
         return $factory;
     }
 
-    private function factoryShouldBeHandledManually($arguments)
+    protected function factoryShouldBeHandledManually($arguments)
     {
         return isset($arguments[0]) && !is_int($arguments[0]) && !is_array($arguments[0]);
     }
@@ -308,7 +308,7 @@ abstract class Factory
         )->first();
     }
 
-    private function getFactoryName(string $relationshipMethodName, string $suffix = "")
+    protected function getFactoryName(string $relationshipMethodName, string $suffix = "")
     {
         $factoryLocation = config('poser.factories_directory', "Tests\\Factories\\");
 
@@ -319,7 +319,7 @@ abstract class Factory
     {
         $this->withRelationships->each(
             function ($relatedModels, $relationshipName) use ($model) {
-                $models = $this->makeModels($relatedModels);
+                $models = $relatedModels instanceof Factory ? $relatedModels->make() : $relatedModels;
 
                 if ($models instanceof Model) {
                     $models = collect([$models]);
@@ -344,21 +344,13 @@ abstract class Factory
     {
         $this->forRelationships->each(
             function ($owningModel, $relationshipName) use ($model) {
-                $model->{$relationshipName}()->associate($this->createModels($owningModel));
+                $model->{$relationshipName}()->associate(
+                    $owningModel instanceof Factory ? $owningModel->create() : $owningModel
+                );
             }
         );
 
         return $this;
-    }
-
-    private function makeModels($modelDefinition)
-    {
-        return $modelDefinition instanceof Factory ? $modelDefinition->make() : $modelDefinition;
-    }
-
-    private function createModels($modelDefinition)
-    {
-        return $modelDefinition instanceof Factory ? $modelDefinition->create() : $modelDefinition;
     }
 
     protected function getModelName()
