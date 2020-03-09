@@ -166,9 +166,11 @@ abstract class Factory
      */
     public function states(...$states)
     {
-        collect($states)->flatten()->each(function ($state) {
-            $this->states[] = $state;
-        });
+        collect($states)->flatten()->each(
+            function ($state) {
+                $this->states[] = $state;
+            }
+        );
 
         return $this;
     }
@@ -189,16 +191,20 @@ abstract class Factory
         $returnFirstCollectionResultAtEnd = !$result instanceof Collection;
         $result = $returnFirstCollectionResultAtEnd ? collect([$result]) : $result;
 
-        $result->each(function ($model) {
-            $this->buildAllForRelationships($model);
-            $model->save();
-        });
+        $result->each(
+            function ($model) {
+                $this->buildAllForRelationships($model);
+                $model->save();
+            }
+        );
 
         $this->factory->callAfterCreating($returnFirstCollectionResultAtEnd ? $result->first() : $result);
 
-        $result->each(function ($model) {
-            $this->buildAllWithRelationships($model);
-        });
+        $result->each(
+            function ($model) {
+                $this->buildAllWithRelationships($model);
+            }
+        );
 
         return $returnFirstCollectionResultAtEnd ? $result->first() : $result;
     }
@@ -223,21 +229,27 @@ abstract class Factory
 
     protected function handleWithRelationship(string $functionName, array $arguments)
     {
-        $this->withRelationships[$this->getRelationshipMethodName($functionName)] = $this->buildRelationshipData($functionName,
-            $arguments);
+        $this->withRelationships[$this->getRelationshipMethodName($functionName)] = $this->buildRelationshipData(
+            $functionName,
+            $arguments
+        );
     }
 
     protected function handleForRelationship(string $functionName, array $arguments)
     {
-        $this->forRelationships[$this->getRelationshipMethodName($functionName)] = $this->buildRelationshipData($functionName,
-            $arguments);
+        $this->forRelationships[$this->getRelationshipMethodName($functionName)] = $this->buildRelationshipData(
+            $functionName,
+            $arguments
+        );
     }
 
     private function getRelationshipMethodName(string $functionName)
     {
-        $prefix = collect(static::$relationshipPrefixes)->filter(function ($prefix) use ($functionName) {
-            return Str::contains($functionName, $prefix);
-        })->first();
+        $prefix = collect(static::$relationshipPrefixes)->filter(
+            function ($prefix) use ($functionName) {
+                return Str::contains($functionName, $prefix);
+            }
+        )->first();
 
         return Str::camel(Str::after($functionName, $prefix));
     }
@@ -253,11 +265,15 @@ abstract class Factory
             isset($arguments[0]) && is_int($arguments[0]) ? $arguments[0] : 1
         );
 
-        collect($arguments)->filter(function ($argument) {
-            return is_array($argument);
-        })->first(function ($attributes) use ($factory) {
-            $factory->withAttributes($attributes);
-        });
+        collect($arguments)->filter(
+            function ($argument) {
+                return is_array($argument);
+            }
+        )->first(
+            function ($attributes) use ($factory) {
+                $factory->withAttributes($attributes);
+            }
+        );
 
         return $factory;
     }
@@ -271,17 +287,25 @@ abstract class Factory
     {
         $relationshipMethodName = $this->getRelationshipMethodName($functionName);
 
-        return collect(["", "Factory"])->map(function ($suffix) use ($relationshipMethodName) {
-            return $this->getFactoryName($relationshipMethodName, $suffix);
-        })->filter(function ($class) {
-            return class_exists($class);
-        })->whenEmpty(function () use ($functionName, $relationshipMethodName) {
-            throw new ArgumentsNotSatisfiableException(class_basename($this), $functionName,
-                $relationshipMethodName, [
-                    $this->getFactoryName($relationshipMethodName),
-                    $this->getFactoryName($relationshipMethodName, "Factory")
-                ]);
-        })->first();
+        return collect(["", "Factory"])->map(
+            function ($suffix) use ($relationshipMethodName) {
+                return $this->getFactoryName($relationshipMethodName, $suffix);
+            }
+        )->filter(
+            function ($class) {
+                return class_exists($class);
+            }
+        )->whenEmpty(
+            function () use ($functionName, $relationshipMethodName) {
+                throw new ArgumentsNotSatisfiableException(
+                    class_basename($this), $functionName,
+                    $relationshipMethodName, [
+                        $this->getFactoryName($relationshipMethodName),
+                        $this->getFactoryName($relationshipMethodName, "Factory")
+                    ]
+                );
+            }
+        )->first();
     }
 
     private function getFactoryName(string $relationshipMethodName, string $suffix = "")
@@ -293,30 +317,36 @@ abstract class Factory
 
     protected function buildAllWithRelationships($model)
     {
-        $this->withRelationships->each(function ($relatedModels, $relationshipName) use ($model) {
-            $models = $this->makeModels($relatedModels);
+        $this->withRelationships->each(
+            function ($relatedModels, $relationshipName) use ($model) {
+                $models = $this->makeModels($relatedModels);
 
-            if ($models instanceof Model) {
-                $models = collect([$models]);
-            }
-
-            $models->each(function ($relatedModel) use ($model, $relationshipName, $relatedModels) {
-                $model->{$relationshipName}()->save($relatedModel, $relatedModels->pivotAttributes ?? []);
-
-                if ($relatedModels instanceof Factory) {
-                    $relatedModels->buildAllWithRelationships($relatedModel);
+                if ($models instanceof Model) {
+                    $models = collect([$models]);
                 }
-            });
-        });
+
+                $models->each(
+                    function ($relatedModel) use ($model, $relationshipName, $relatedModels) {
+                        $model->{$relationshipName}()->save($relatedModel, $relatedModels->pivotAttributes ?? []);
+
+                        if ($relatedModels instanceof Factory) {
+                            $relatedModels->buildAllWithRelationships($relatedModel);
+                        }
+                    }
+                );
+            }
+        );
 
         return $this;
     }
 
     protected function buildAllForRelationships(Model $model)
     {
-        $this->forRelationships->each(function ($owningModel, $relationshipName) use ($model) {
-            $model->{$relationshipName}()->associate($this->createModels($owningModel));
-        });
+        $this->forRelationships->each(
+            function ($owningModel, $relationshipName) use ($model) {
+                $model->{$relationshipName}()->associate($this->createModels($owningModel));
+            }
+        );
 
         return $this;
     }
