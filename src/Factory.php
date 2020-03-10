@@ -363,9 +363,7 @@ abstract class Factory
      */
     protected function getFactoryName(string $relationshipMethodName, string $suffix = "")
     {
-        $factoryLocation = config('poser.factories_directory', "Tests\\Factories\\");
-
-        return $factoryLocation . Str::studly(Str::singular($relationshipMethodName)) . $suffix;
+        return factoriesNamespace() . Str::studly(Str::singular($relationshipMethodName)) . $suffix;
     }
 
     /**
@@ -428,6 +426,6 @@ abstract class Factory
     protected function getModelName()
     {
         return static::$modelName ??
-            config('poser.models_directory', "App\\") . Str::beforeLast(class_basename($this), "Factory");
+            modelsNamespace() . Str::beforeLast(class_basename($this), "Factory");
     }
 }

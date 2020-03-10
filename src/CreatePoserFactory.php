@@ -48,15 +48,12 @@ class CreatePoserFactory extends GeneratorCommand
     {
         $this->info("Creating Poser Factory called " . $factoryName);
 
-        $factoriesDirectory = config('poser.factories_directory', 'Tests\\Factories');
-        $modelsDirectory = config('poser.models_directory', 'App\\');
-
-        $expectedModelNameSpace = '\\' . $modelsDirectory . Str::beforeLast($factoryName, 'Factory');
+        $expectedModelNameSpace = '\\' . modelsNamespace() . Str::beforeLast($factoryName, 'Factory');
         $linkedModelNamespace = $this->option('model')
             ? '\\' . $this->qualifyClass($this->option('model'))
             : $expectedModelNameSpace;
 
-        $destinationDirectory = base_path() . "/" . str_replace("\\", "/", $factoriesDirectory);
+        $destinationDirectory = base_path() . "/" . str_replace("\\", "/", factoriesNamespace());
 
         if (!File::exists($destinationDirectory)) {
             File::makeDirectory($destinationDirectory);
@@ -79,7 +76,7 @@ class CreatePoserFactory extends GeneratorCommand
 
         $value = file_get_contents($destination);
 
-        $namespace = str_replace('/', '\\', $factoriesDirectory);
+        $namespace = str_replace('/', '\\', factoriesNamespace());
         if (Str::endsWith($namespace, '\\')) {
             $namespace = Str::beforeLast($namespace, '\\');
         }
@@ -118,14 +115,14 @@ class CreatePoserFactory extends GeneratorCommand
     protected function createAllFactories()
     {
         $this->info("Creating Factories from all Models...");
-        collect(File::files(str_replace('\\', '/', config('poser.models_directory'))))
+        collect(File::files(str_replace('\\', '/', modelsNamespace())))
             ->filter(
                 function ($fileInfo) {
-                    return class_exists(config('poser.models_directory') . File::name($fileInfo));
+                    return class_exists(modelsNamespace() . File::name($fileInfo));
                 }
             )->map(
                 function ($fileInfo) {
-                    return config('poser.models_directory') . File::name($fileInfo);
+                    return modelsNamespace() . File::name($fileInfo);
                 }
             )->filter(
                 function ($className) {
@@ -133,7 +130,7 @@ class CreatePoserFactory extends GeneratorCommand
                 }
             )->map(
                 function ($className) {
-                    return Str::substr($className, Str::length(config('poser.models_directory')));
+                    return Str::substr($className, Str::length(modelsNamespace()));
                 }
             )->map(
                 function ($modelType) {
@@ -141,7 +138,7 @@ class CreatePoserFactory extends GeneratorCommand
                 }
             )->filter(
                 function ($factoryName) {
-                    return !class_exists(config('poser.factories_directory', 'Tests\\Factories') . $factoryName);
+                    return !class_exists(factoriesNamespace() . $factoryName);
                 }
             )->each(
                 function ($factoryName) {
