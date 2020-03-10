@@ -450,6 +450,55 @@ $customer = CustomerFactory::new()
 
 As Poser makes use of the built in Laravel factory methods, you can use the `afterMaking()`, `afterCreating()`, `afterMakingState()` and `afterCreatingState()` callbacks in your Laravel database factories as you always have done, and they will be called as you would expect.  
 
+### After Creating
+
+Similar to Laravel's model factories, Poser also offers an `afterCreating()` method that will accept a closure to run after the record(s) have been created.
+
+**Example:**
+- User belongs to a company
+- Company has a single Main user (stored on company record)
+  - setMainUser on Company is a function to just update the main_user_id column on Company
+
+```php
+CompanyFactory::new()
+    ->afterCreating(\App\Company $company) {
+        $company->setMainUser(UserFactory::new()->forCompany($company)->create());
+    })->create();
+```
+
+So after the Company has been created, it will create a new user for that company, and set it as the main user for the company.
+
+This will also work when using `times()` to create multiple companies, and it will create a new user for each created company
+
+```php
+CompanyFactory::times(3)
+    ->afterCreating(\App\Company $company) {
+        $company->setMainUser(UserFactory::new()->forCompany($company)->create());
+    })->create();
+```
+
+Logic like this is likely to be commonly used, and this is where Poser being classed based helps, as you can store this
+logic behind a function on the `CompanyFactory` class, as such:
+
+```php
+class CompanyFactory extends Factory {
+    public function withMainUser()
+    {
+        return $this->afterCreating(function(Company $company) {
+            $company->setMainUser(UserFactory::new()->forCompany($company)->create());
+        });
+    }
+}
+```
+
+Allowing you to then just call `withMainUser()`
+
+```php
+CompanyFactory::times(3)
+    ->withMainUser()
+    ->create();
+```
+
 ### Factory API
 
 #### `::new()`

@@ -25,6 +25,7 @@ abstract class Factory
         $count = 1,
         $withRelationships,
         $forRelationships,
+        $afterCreating,
         $attributes = [],
         $pivotAttributes = [],
         $states = [];
@@ -61,6 +62,7 @@ abstract class Factory
         $this->factory = factory($this->getModelName());
         $this->withRelationships = collect([]);
         $this->forRelationships = collect([]);
+        $this->afterCreating = collect([]);
     }
 
     /**
@@ -199,6 +201,7 @@ abstract class Factory
         );
 
         $this->factory->callAfterCreating($returnFirstCollectionResultAtEnd ? $result->first() : $result);
+        $this->processAfterCreating($result);
 
         $result->each(
             function ($model) {
@@ -225,6 +228,20 @@ abstract class Factory
         }
 
         return $this->factory->states($this->states)->make(array_merge($this->attributes, $attributes));
+    }
+
+    /**
+     * Provide a closure that will be called after the factory has created the record(s)
+     *
+     * @param \Closure $closure
+     *
+     * @return $this
+     */
+    public function afterCreating(\Closure $closure)
+    {
+        $this->afterCreating->push($closure);
+
+        return $this;
     }
 
     /**
@@ -416,6 +433,22 @@ abstract class Factory
         );
 
         return $this;
+    }
+
+    /**
+     * Process any closures added to the afterCreating collection
+     *
+     * The created model will be passed into the closure as the first param
+     *
+     * @param \Illuminate\Support\Collection $result
+     */
+    protected function processAfterCreating(Collection $result)
+    {
+        $result->each(function($model) {
+            $this->afterCreating->each(function($closure) use ($model) {
+                $closure($model);
+            });
+        });
     }
 
     /**
