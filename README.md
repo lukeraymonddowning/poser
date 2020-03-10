@@ -49,7 +49,7 @@ Next, publish the Poser config file by calling
 To get started quickly, we provide a `php artisan make:poser` command. You may pass the desired name
 of your factory as an argument. So the command to create the `UserFactory` would be `php artisan make:poser UserFactory`.
 
-If you want to let Poser do all of the work, simply call `php artisan make:poser` to turn all the models defined in your poser.models_directory config entry into Poser Factories.
+If you want to let Poser do all of the work, simply call `php artisan make:poser` to turn all the models defined in your poser.models_namespace config entry into Poser Factories.
 
 More of a visual person? [Watch this video demonstration of Poser](https://vimeo.com/395500107)
 
@@ -489,14 +489,14 @@ be called on the related factory, not the root-level factory.
 ### `php artisan make:poser` API
 
 If no arguments are passed to the command, Poser will attempt to create matching factories for every model in your 
-application. It does this by looking at your `poser.model_directory` config entry, and scanning for models in that given
-directory. You may call `make:poser` multiple times without fear of it overriding your existing factories; if it finds
+application. It does this by looking at your `poser.models_namespace` config entry, and scanning for models in that given
+namespace. You may call `make:poser` multiple times without fear of it overriding your existing factories; if it finds
 that a given factory already exists, it will simply skip over it.
 
 #### Individual Factories
 You may optionally pass a name to the command, which corresponds to the name of the factory you want to create. For
 instance, `php artisan make:poser UserFactory` would create a factory called `UserFactory` in the namespace defined
-in your `poser.factories_directory` config file.
+in your `poser.factories_namespace` config file.
 
 #### The `-m` or `-model` Flag
 If your model name is different to the name you wish to give your factory, you may pass a `-m` or `-model` flag, along 
@@ -510,7 +510,7 @@ The database factory will take the form `[modelName]Factory`.
 ### Things to note
 #### Models location
 By default, Poser looks for your models in the `App` directory, which should be fine for most projects.
-If you have your models in a different directory, you can let Poser know about it by editing the `models_directory`
+If you have your models in a different directory, you can let Poser know about it by editing the `models_namespace`
 entry in the `poser.php` config file.
 
 If you need to override the model location for a single instance, you can override the `$modelName` static variable
@@ -519,7 +519,7 @@ in your Factory class, passing it the fully qualified class name of the correspo
 #### Factories location
 By default, Poser will search the `Tests/Factories` directory for your Factory classes.
 If you have your Factories in a different directory (eg: `Tests/Models/Factories`),
-you can let Poser know about it by editing the `factories_directory` entry in the poser.php config
+you can let Poser know about it by editing the `factories_namespace` entry in the poser.php config
 file.
 
 #### The `->create()` and `->make()` commands
@@ -581,6 +581,9 @@ When we call `UserFactory::new()->withClients()()`, Poser understands that you'r
 ```php
 UserFactory::new()->withClients(CustomerFactory::times(10))();
 ```
+
+## Changelog
+Take a look at the `CHANGELOG.md` file for details on changes from update to update.
 
 ## Credits
 
