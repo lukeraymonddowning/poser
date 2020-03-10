@@ -9,6 +9,14 @@ use Lukeraymonddowning\Poser\Tests\TestCase;
 class FactoryTest extends TestCase
 {
     /** @test */
+    public function it_returns_a_new_instance_of_the_factory()
+    {
+        $this->assertInstanceOf(UserFactory::class, UserFactory::new());
+
+        $this->assertInstanceOf(UserFactory::class, UserFactory::times(5));
+    }
+
+    /** @test */
     public function it_creates_a_user()
     {
         $this->assertEquals(0, User::count());
@@ -63,6 +71,11 @@ class FactoryTest extends TestCase
 
         $this->assertFalse($john->active);
         $this->assertNull($john->email_verified_at);
+
+        $jane = UserFactory::new()->states('inactive', 'unverified')->create();
+
+        $this->assertFalse($jane->active);
+        $this->assertNull($jane->email_verified_at);
     }
 
     /** @test */

@@ -6,5 +6,4 @@ use Lukeraymonddowning\Poser\Factory;
 
 class UserFactory extends Factory
 {
-
 }
