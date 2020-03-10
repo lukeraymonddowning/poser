@@ -15,6 +15,11 @@
     "require": {
         "illuminate/support": "^6.0|^7.0"
     },
+    "require-dev": {
+        "orchestra/testbench": "^4.0",
+        "illuminate/database": "^6.0|^7.0",
+        "phpunit/phpunit": "^8.0"
+    },
     "autoload": {
         "psr-4": {
             "Lukeraymonddowning\\Poser\\": "./src"
@@ -22,7 +27,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Lukeraymonddowning\\Poser\\Tests\\": "tests"
+            "Lukeraymonddowning\\Poser\\Tests\\": "./tests"
         }
     },
     "scripts": {
@@ -34,8 +39,5 @@
                 "Lukeraymonddowning\\Poser\\PoserServiceProvider"
             ]
         }
-    },
-    "require-dev": {
-        "orchestra/testbench": "^4.0"
     }
 }
