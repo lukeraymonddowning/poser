@@ -582,6 +582,9 @@ When we call `UserFactory::new()->withClients()()`, Poser understands that you'r
 UserFactory::new()->withClients(CustomerFactory::times(10))();
 ```
 
+## Changelog
+Take a look at the `CHANGELOG.md` file for details on changes from update to update.
+
 ## Credits
 
 - [Luke Raymond Downing](https://github.com/lukeraymonddowning)
