@@ -446,10 +446,6 @@ abstract class Factory
      */
     protected function processAfterCreating(Collection $result)
     {
-        if ($this->afterCreating->isEmpty()) {
-            return;
-        }
-
         $result->each(function($model) {
             $this->afterCreating->each(function($closure) use ($model) {
                 $closure($model);
