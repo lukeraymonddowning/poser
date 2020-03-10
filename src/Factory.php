@@ -411,7 +411,7 @@ abstract class Factory
                 );
 
                 if ($relatedModels instanceof Factory) {
-                    $relatedModels->processAfterCreating($models);
+                    $relatedModels->processAfterCreating($models, $model);
                 }
             }
         );
@@ -445,12 +445,13 @@ abstract class Factory
      * The created model will be passed into the closure as the first param
      *
      * @param \Illuminate\Support\Collection $result
+     * @param Model|null                     $model
      */
-    protected function processAfterCreating(Collection $result)
+    protected function processAfterCreating(Collection $result, Model $model = null)
     {
-        $result->each(function($model) {
-            $this->afterCreating->each(function($closure) use ($model) {
-                $closure($model);
+        $result->each(function($createdRelation) use ($model) {
+            $this->afterCreating->each(function($closure) use ($createdRelation, $model) {
+                $closure($createdRelation, $model);
             });
         });
     }

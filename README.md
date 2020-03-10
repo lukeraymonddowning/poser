@@ -504,10 +504,13 @@ The `afterCreating()` method also works on nested relationships:
 ```php
 /** @test */
 
-$user = UserFactory::new()->withCustomers(CustomerFactory::times(10)->afterCreating(function($customer) {
+$user = UserFactory::new()->withCustomers(CustomerFactory::times(10)->afterCreating(function($customer, $user) {
     // Perform an action to the newly created (and linked) customer model
 }))->create();
 ```
+
+Note that nested relationships are also given the parent model, in this case the `User` that was created, as the
+second argument of the closure.
 
 ### Factory API
 
@@ -548,7 +551,10 @@ be called on the related factory, not the root-level factory.
 #### `->afterCreating(Closure $closure)`
 Allows you to provide a hook that will be called when the given factory has created its model(s). This 
 allows you to perform additional setup to created models. It can be placed on relationships as well as 
-the parent model.
+the parent model. 
+
+The closure will be provided with the created model as the first parameter. If `afterCreating()` is called
+on a relationship, it will also be given the parent model as the second parameter.
 
 ### `php artisan make:poser` API
 
