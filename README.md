@@ -16,7 +16,7 @@ Laravel Class-based Model Factories in literal seconds! Write tests that look as
 public function a_user_can_have_customers()
 {
     UserFactory::times(20)
-               ->withAddress()
+               ->hasAddress()
                ->withCustomers(CustomerFactory::times(20)->withBooks(5))();
 
     $this->assertCount(20 * 20 * 5, Book::all());
