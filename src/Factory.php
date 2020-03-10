@@ -99,6 +99,43 @@ abstract class Factory
     }
 
     /**
+     * Alternate syntax to magic bindings that provides more robust IDE support. Given a count,
+     * relationship method name and optionally an array of attributes, it prepares the model
+     * to receive the requested number of related models when it is created.
+     *
+     * @param int    $count The number of models that should be linked to the parent model.
+     * @param string $relationshipMethodName The name of the method found in the parent class that links the related models.
+     * @param array  $attributes An optional associative array of column names and values that should be applied to the linked models.
+     * @return $this
+     */
+    public function has(int $count, string $relationshipMethodName, array $attributes = [])
+    {
+        return $this->with($count, $relationshipMethodName, $attributes);
+    }
+
+    /**
+     * Alternate syntax to magic bindings that provides more robust IDE support. Given a count,
+     * relationship method name and optionally an array of attributes, it prepares the model
+     * to receive the requested number of related models when it is created.
+     *
+     * @param int    $count The number of models that should be linked to the parent model.
+     * @param string $relationshipMethodName The name of the method found in the parent class that links the related models.
+     * @param array  $attributes An optional associative array of column names and values that should be applied to the linked models.
+     * @return $this
+     */
+    public function with(int $count, string $relationshipMethodName, array $attributes = [])
+    {
+        $relationshipMethodName = Str::camel("has " . $relationshipMethodName);
+
+        $this->handleWithRelationship(
+            $relationshipMethodName,
+            [$count, $attributes]
+        );
+
+        return $this;
+    }
+
+    /**
      * If specified, Poser will use these attributes on the model/s when it/they are created. If you also pass
      * attributes into the `make()` or `create()` commands, they will take precedence over attributes passed
      * in here.
