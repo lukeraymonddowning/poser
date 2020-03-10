@@ -499,6 +499,16 @@ CompanyFactory::times(3)
     ->create();
 ```
 
+The `afterCreating()` method also works on nested relationships:
+
+```php
+/** @test */
+
+$user = UserFactory::new()->withCustomers(CustomerFactory::times(10)->afterCreating(function($customer) {
+    // Perform an action to the newly created (and linked) customer model
+}))->create();
+```
+
 ### Factory API
 
 #### `::new()`
@@ -534,6 +544,11 @@ to the created models.
 When working with Many-to-Many relationships, you may want to store data on the pivot table. You may use
 this method to do so, passing in an associative array of column names with desired values. This should
 be called on the related factory, not the root-level factory.
+
+#### `->afterCreating(Closure $closure)`
+Allows you to provide a hook that will be called when the given factory has created its model(s). This 
+allows you to perform additional setup to created models. It can be placed on relationships as well as 
+the parent model.
 
 ### `php artisan make:poser` API
 

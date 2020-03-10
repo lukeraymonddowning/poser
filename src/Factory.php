@@ -409,6 +409,10 @@ abstract class Factory
                         }
                     }
                 );
+
+                if ($relatedModels instanceof Factory) {
+                    $relatedModels->processAfterCreating($models);
+                }
             }
         );
 
