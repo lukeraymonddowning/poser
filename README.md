@@ -486,6 +486,11 @@ When working with Many-to-Many relationships, you may want to store data on the 
 this method to do so, passing in an associative array of column names with desired values. This should
 be called on the related factory, not the root-level factory.
 
+#### `->with(int $count, string $relationshipMethodName, array $attributes = [])` or `->has(int $count, string $relationshipMethodName, array $attributes = [])`
+Alternate syntax to magic bindings that provides more robust IDE support. Given a count,
+relationship method name and optionally an array of attributes, it prepares the model
+to receive the requested number of related models when it is created.
+
 ### `php artisan make:poser` API
 
 If no arguments are passed to the command, Poser will attempt to create matching factories for every model in your 
@@ -544,6 +549,16 @@ public function user_has_customers()
     $this->assertCount(150, Book::all());
 }
 ```
+
+#### The `has` and `with` methods
+Not everybody likes magic methods. We understand that (even if we don't necessarily agree) and provide alternate syntax
+via the `has` and `with` methods. You can use them like so: `UserFactory::new()->has(10, 'customers')->create()`.
+
+Both methods may also be given an array of attributes that will be applied to the related models at the time of creation,
+like so: `UserFactory::new()->with(5, 'customers', ['name' => 'Joe Bloggs'])->create()`.
+
+Please note that this syntax uses magic bindings, so if your relationship method name does not match your factory name, it
+won't work. In that case, use the standard `UserFactory::new()->withCustomers(ClientFactory::times(5))->create()` syntax.
 
 ### Troubleshooting
 #### I keep getting a `ModelNotBuiltException` when trying to access properties or functions on the model I created
