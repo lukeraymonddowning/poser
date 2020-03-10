@@ -42,8 +42,8 @@ class TestCase extends Orchestra
     protected function getEnvironmentSetUp($app): void
     {
         $app['config']->set('app.key', '6rE9Nz59bGRbeMATftriyQjrpF7DcOQm');
-        $app['config']->set('poser.models_directory', 'Lukeraymonddowning\\Poser\\Tests\\Models\\');
-        $app['config']->set('poser.factories_directory', 'Lukeraymonddowning\\Poser\\Tests\\Factories\\');
+        $app['config']->set('poser.models_namespace', 'Lukeraymonddowning\\Poser\\Tests\\Models\\');
+        $app['config']->set('poser.factories_namespace', 'Lukeraymonddowning\\Poser\\Tests\\Factories\\');
     }
 
     /**
