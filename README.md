@@ -549,6 +549,12 @@ Follow me on Twitter [@LukeDowning19](https://twitter.com/LukeDowning19) for upd
 ## Security
 If you discover any security-related issues, please email lukeraymonddowning@gmail.com instead of using the issue tracker.
 
+## Testing
+```shell script
+composer install
+composer test
+```
+
 ## License
 The MIT License (MIT). Please see [License File](/LICENSE.md) for more information.
 
