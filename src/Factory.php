@@ -3,14 +3,10 @@
 
 namespace Lukeraymonddowning\Poser;
 
-use Closure;
-use App\User;
+use Mockery\Exception;
 use Illuminate\Support\Str;
-use Tests\Factories\UserFactory;
 use Illuminate\Support\Collection;
-use Tests\Factories\CustomerFactory;
 use Illuminate\Database\Eloquent\Model;
-use phpDocumentor\Reflection\Types\Integer;
 use Lukeraymonddowning\Poser\Exceptions\ModelNotBuiltException;
 use Lukeraymonddowning\Poser\Exceptions\ArgumentsNotSatisfiableException;
 
@@ -28,7 +24,8 @@ abstract class Factory
         $afterCreating,
         $attributes = [],
         $pivotAttributes = [],
-        $states = [];
+        $states = [],
+        $createdInstance;
 
     public $factory;
 
@@ -92,12 +89,24 @@ abstract class Factory
             return $this;
         }
 
-        throw new ModelNotBuiltException($this, $name, $this->getModelName());
+        try {
+            $model = $this->createdInstance ?? $this->create();
+
+            return call_user_func_array([$model, $name], $arguments);
+        } catch (Exception $e) {
+            throw new ModelNotBuiltException($this, $name, $this->getModelName());
+        }
     }
 
     public function __get(string $name)
     {
-        throw new ModelNotBuiltException($this, $name, $this->getModelName());
+        try {
+            $model = $this->createdInstance ?? $this->create();
+
+            return $model->$name;
+        } catch (Exception $e) {
+            throw new ModelNotBuiltException($this, $name, $this->getModelName());
+        }
     }
 
     /**
@@ -209,7 +218,9 @@ abstract class Factory
             }
         );
 
-        return $returnFirstCollectionResultAtEnd ? $result->first() : $result;
+        $this->createdInstance = $returnFirstCollectionResultAtEnd ? $result->first() : $result;
+
+        return $this->createdInstance;
     }
 
     /**
@@ -449,11 +460,15 @@ abstract class Factory
      */
     protected function processAfterCreating(Collection $result, Model $model = null)
     {
-        $result->each(function($createdRelation) use ($model) {
-            $this->afterCreating->each(function($closure) use ($createdRelation, $model) {
-                $closure($createdRelation, $model);
-            });
-        });
+        $result->each(
+            function ($createdRelation) use ($model) {
+                $this->afterCreating->each(
+                    function ($closure) use ($createdRelation, $model) {
+                        $closure($createdRelation, $model);
+                    }
+                );
+            }
+        );
     }
 
     /**
