@@ -97,6 +97,7 @@ abstract class Factory
 
         try {
             $model = $this->createdInstance ?? $this->create();
+
             return call_user_func_array([$model, $name], $arguments);
         } catch (Exception $e) {
             throw new ModelNotBuiltException($this, $name, $this->getModelName());
@@ -107,6 +108,7 @@ abstract class Factory
     {
         try {
             $model = $this->createdInstance ?? $this->create();
+
             return $model->$name;
         } catch (Exception $e) {
             throw new ModelNotBuiltException($this, $name, $this->getModelName());
@@ -223,6 +225,7 @@ abstract class Factory
         );
 
         $this->createdInstance = $returnFirstCollectionResultAtEnd ? $result->first() : $result;
+
         return $this->createdInstance;
     }
 
