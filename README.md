@@ -248,6 +248,21 @@ public function user_has_address()
 }
 ```
 
+In most cases, we don't even need to call `create`, Poser will call it for us when we try to access a method or property
+on the model or collection we have built (in this case, the `$user` property).
+```php
+/** @test */
+public function user_has_address()
+{
+    $user = UserFactory::new()
+        ->hasAddress([
+            "line_1" => "1 Test Street" 
+        ]);
+
+    $this->assertNotEmpty($user->address); // When we access the $address property, Poser automatically calls `create` for us.
+}
+```
+
 Let's now put this all together, and demonstrate how simple it is to world build in Poser. Imagine we
 want 10 Users, each with an Address and 20 customers. Each customer should have 5 books. That should 
 be 10 `User`s, 10 `Address`es, 200 `Customer`s and 1000 `Book`s. Check it out:
@@ -276,7 +291,9 @@ the `CustomerFactory`, simply passing the integer `5`. Poser looks for a `BookFa
 and automatically calls `BookFactory::times(5)` under the hood.
 
 Finally, we complete the statement by invoking the UserFactory with `()`. This is a shorthand syntax
-for calling `create()` on the `UserFactory`.
+for calling `create()` on the `UserFactory`. Because in these tests we are accessing the models indirectly 
+(we request the models from the database in the assertions rather than accessing a property or method on the users), 
+we must invoke the `create` or `()` method.
 
 For reference, the same test using Laravel's built in factories looks like this:
 
@@ -366,7 +383,7 @@ public function a_user_can_have_many_comments() {
 
 /** @test */
 public function a_customer_can_have_many_comments() {
-    $customer = CustomerFactory::new()->withComments(25)->forUser(UserFactory::new()())();
+    $customer = CustomerFactory::new()->withComments(25)->forUser(UserFactory::new())();
 
     $this->assertCount(25, $customer->comments);
 }
@@ -385,12 +402,14 @@ public function customer_has_user()
 {
     $customer = CustomerFactory::new()
         ->forUser(
-            UserFactory::new()->create()
+            UserFactory::new()
         )->create();
 
     $this->assertNotEmpty($customer->user);
 }
 ```
+
+No need to call `create` on the `UserFactory` either; Poser will do that for you!
 
 ### Factory States
 If you have setup any States in your laravel factories, then you can also use them with Poser.
@@ -499,6 +518,19 @@ CompanyFactory::times(3)
     ->create();
 ```
 
+The `afterCreating()` method also works on nested relationships:
+
+```php
+/** @test */
+
+$user = UserFactory::new()->withCustomers(CustomerFactory::times(10)->afterCreating(function($customer, $user) {
+    // Perform an action to the newly created (and linked) customer model
+}))->create();
+```
+
+Note that nested relationships are also given the parent model, in this case the `User` that was created, as the
+second argument of the closure.
+
 ### Factory API
 
 #### `::new()`
@@ -512,6 +544,10 @@ Use this to instantiate the class when you wish to create multiple entries in th
 Similar to the Laravel factory `create` command, this will create the models, persisting them to the database.
 You may pass an associative array of column names with desired values, which will be applied to the 
 created models. You can optionally call create by invoking the Factory. This allows for a shorter syntax.
+
+If you're interacting with the models directly in your tests, rather than re-fetching them from the database,
+you can omit the `create` call completely. Poser will automatically call the `create` method for you when you
+try to access a property or call a method on the model(s)/collection.
 
 #### `->make(array $attributes)`
 Similar to the Laravel factory `make` command, this will make the models without persisting them to the 
@@ -534,6 +570,14 @@ to the created models.
 When working with Many-to-Many relationships, you may want to store data on the pivot table. You may use
 this method to do so, passing in an associative array of column names with desired values. This should
 be called on the related factory, not the root-level factory.
+
+#### `->afterCreating(Closure $closure)`
+Allows you to provide a hook that will be called when the given factory has created its model(s). This 
+allows you to perform additional setup to created models. It can be placed on relationships as well as 
+the parent model. 
+
+The closure will be provided with the created model as the first parameter. If `afterCreating()` is called
+on a relationship, it will also be given the parent model as the second parameter.
 
 ### `php artisan make:poser` API
 
