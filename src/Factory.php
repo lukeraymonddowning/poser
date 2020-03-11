@@ -3,16 +3,10 @@
 
 namespace Lukeraymonddowning\Poser;
 
-use Closure;
-use App\User;
 use Mockery\Exception;
 use Illuminate\Support\Str;
-use Tests\Factories\UserFactory;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
-use Tests\Factories\CustomerFactory;
 use Illuminate\Database\Eloquent\Model;
-use phpDocumentor\Reflection\Types\Integer;
 use Lukeraymonddowning\Poser\Exceptions\ModelNotBuiltException;
 use Lukeraymonddowning\Poser\Exceptions\ArgumentsNotSatisfiableException;
 
