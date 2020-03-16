@@ -3,14 +3,10 @@
 
 namespace Lukeraymonddowning\Poser;
 
-use Closure;
-use App\User;
+use Mockery\Exception;
 use Illuminate\Support\Str;
-use Tests\Factories\UserFactory;
 use Illuminate\Support\Collection;
-use Tests\Factories\CustomerFactory;
 use Illuminate\Database\Eloquent\Model;
-use phpDocumentor\Reflection\Types\Integer;
 use Lukeraymonddowning\Poser\Exceptions\ModelNotBuiltException;
 use Lukeraymonddowning\Poser\Exceptions\ArgumentsNotSatisfiableException;
 
@@ -28,7 +24,8 @@ abstract class Factory
         $afterCreating,
         $attributes = [],
         $pivotAttributes = [],
-        $states = [];
+        $states = [],
+        $createdInstance;
 
     public $factory;
 
@@ -92,12 +89,24 @@ abstract class Factory
             return $this;
         }
 
-        throw new ModelNotBuiltException($this, $name, $this->getModelName());
+        try {
+            $model = $this->createdInstance ?? $this->create();
+
+            return call_user_func_array([$model, $name], $arguments);
+        } catch (Exception $e) {
+            throw new ModelNotBuiltException($this, $name, $this->getModelName());
+        }
     }
 
     public function __get(string $name)
     {
-        throw new ModelNotBuiltException($this, $name, $this->getModelName());
+        try {
+            $model = $this->createdInstance ?? $this->create();
+
+            return $model->$name;
+        } catch (Exception $e) {
+            throw new ModelNotBuiltException($this, $name, $this->getModelName());
+        }
     }
 
     /**
@@ -209,7 +218,9 @@ abstract class Factory
             }
         );
 
-        return $returnFirstCollectionResultAtEnd ? $result->first() : $result;
+        $this->createdInstance = $returnFirstCollectionResultAtEnd ? $result->first() : $result;
+
+        return $this->createdInstance;
     }
 
     /**
@@ -252,10 +263,13 @@ abstract class Factory
      */
     protected function handleWithRelationship(string $functionName, array $arguments)
     {
-        $this->withRelationships[$this->getRelationshipMethodName($functionName)] = $this->buildRelationshipData(
-            $functionName,
-            $arguments
-        );
+        $this->withRelationships[] = [
+            $this->getRelationshipMethodName($functionName),
+            $this->buildRelationshipData(
+                $functionName,
+                $arguments
+            )
+        ];
     }
 
     /**
@@ -266,10 +280,13 @@ abstract class Factory
      */
     protected function handleForRelationship(string $functionName, array $arguments)
     {
-        $this->forRelationships[$this->getRelationshipMethodName($functionName)] = $this->buildRelationshipData(
-            $functionName,
-            $arguments
-        );
+        $this->forRelationships[] = [
+            $this->getRelationshipMethodName($functionName),
+            $this->buildRelationshipData(
+                $functionName,
+                $arguments
+            )
+        ];
     }
 
     /**
@@ -393,7 +410,9 @@ abstract class Factory
     protected function buildAllWithRelationships($model)
     {
         $this->withRelationships->each(
-            function ($relatedModels, $relationshipName) use ($model) {
+            function ($data) use ($model) {
+                $relationshipName = $data[0];
+                $relatedModels = $data[1];
                 $models = $relatedModels instanceof Factory ? $relatedModels->make() : $relatedModels;
 
                 if ($models instanceof Model) {
@@ -409,6 +428,10 @@ abstract class Factory
                         }
                     }
                 );
+
+                if ($relatedModels instanceof Factory) {
+                    $relatedModels->processAfterCreating($models, $model);
+                }
             }
         );
 
@@ -425,7 +448,9 @@ abstract class Factory
     protected function buildAllForRelationships(Model $model)
     {
         $this->forRelationships->each(
-            function ($owningModel, $relationshipName) use ($model) {
+            function ($data) use ($model) {
+                $relationshipName = $data[0];
+                $owningModel = $data[1];
                 $model->{$relationshipName}()->associate(
                     $owningModel instanceof Factory ? $owningModel->create() : $owningModel
                 );
@@ -441,14 +466,19 @@ abstract class Factory
      * The created model will be passed into the closure as the first param
      *
      * @param \Illuminate\Support\Collection $result
+     * @param Model|null                     $model
      */
-    protected function processAfterCreating(Collection $result)
+    protected function processAfterCreating(Collection $result, Model $model = null)
     {
-        $result->each(function($model) {
-            $this->afterCreating->each(function($closure) use ($model) {
-                $closure($model);
-            });
-        });
+        $result->each(
+            function ($createdRelation) use ($model) {
+                $this->afterCreating->each(
+                    function ($closure) use ($createdRelation, $model) {
+                        $closure($createdRelation, $model);
+                    }
+                );
+            }
+        );
     }
 
     /**
