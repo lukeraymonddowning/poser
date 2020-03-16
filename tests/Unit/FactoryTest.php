@@ -2,7 +2,10 @@
 
 namespace Lukeraymonddowning\Poser\Tests\Unit;
 
+use Lukeraymonddowning\Poser\Tests\Factories\CustomerFactory;
 use Lukeraymonddowning\Poser\Tests\Factories\UserFactory;
+use Lukeraymonddowning\Poser\Tests\Models\Address;
+use Lukeraymonddowning\Poser\Tests\Models\Customer;
 use Lukeraymonddowning\Poser\Tests\Models\User;
 use Lukeraymonddowning\Poser\Tests\TestCase;
 
@@ -86,5 +89,33 @@ class FactoryTest extends TestCase
         UserFactory::new()->times(5)->create();
 
         $this->assertEquals(5, User::count());
+    }
+
+    /** @test */
+    public function it_creates_a_user_with_address()
+    {
+        $john = UserFactory::new()->withAddress()->create();
+        $this->assertInstanceOf(Address::class, $john->address);
+
+        $jack = UserFactory::new()->hasAddress()->create();
+        $this->assertInstanceOf(Address::class, $jack->address);
+
+        $jane = UserFactory::new()->withAddress(['line_1' => 'Red Square 1'])->create();
+        $this->assertEquals('Red Square 1', $jane->address->line_1);
+    }
+
+    /** @test */
+    public function it_creates_a_user_with_related_customers()
+    {
+        $john = UserFactory::new()->withCustomers()->create();
+        $this->assertCount(1, $john->customers);
+
+        $jane = UserFactory::new()->withCustomers(3)->create();
+        $this->assertCount(3, $jane->customers);
+
+        $jane = UserFactory::new()->withCustomers(2, ['name' => 'John Namesake'])->create();
+        $this->assertCount(2, $jane->customers);
+        $this->assertEquals('John Namesake', $jane->customers[0]->name);
+        $this->assertEquals('John Namesake', $jane->customers[1]->name);
     }
 }
