@@ -49,7 +49,7 @@ Next, publish the Poser config file by calling
 To get started quickly, we provide a `php artisan make:poser` command. You may pass the desired name
 of your factory as an argument. So the command to create the `UserFactory` would be `php artisan make:poser UserFactory`.
 
-If you want to let Poser do all of the work, simply call `php artisan make:poser` to turn all the models defined in your poser.models_namespace config entry into Poser Factories.
+If you want to let Poser do all of the work, simply call `php artisan make:poser` to turn all the models defined in your `poser.models_namespace` config entry into Poser Factories.
 
 More of a visual person? [Watch this video demonstration of Poser](https://vimeo.com/395500107)
 
@@ -591,13 +591,13 @@ You may optionally pass a name to the command, which corresponds to the name of 
 instance, `php artisan make:poser UserFactory` would create a factory called `UserFactory` in the namespace defined
 in your `poser.factories_namespace` config file.
 
-#### The `-m` or `-model` Flag
-If your model name is different to the name you wish to give your factory, you may pass a `-m` or `-model` flag, along 
+#### The `-m` or `--model` Flag
+If your model name is different to the name you wish to give your factory, you may pass a `-m` or `--model` flag, along 
 with the name of the model that the factory will correspond to. So `php artisan make:poser ClientFactory -m Customer`
 would create a factory called `ClientFactory`, but point it to the `Customer` model.
 
-#### The `-f` or `-factory` Flag
-You may pass `-f` or `-factory` to the command to optionally generate a corresponding [Laravel database factory](https://laravel.com/docs/database-testing#writing-factories). 
+#### The `-f` or `--factory` Flag
+You may pass `-f` or `--factory` to the command to optionally generate a corresponding [Laravel database factory](https://laravel.com/docs/database-testing#writing-factories). 
 The database factory will take the form `[modelName]Factory`.
 
 ### Things to note
@@ -612,7 +612,7 @@ in your Factory class, passing it the fully qualified class name of the correspo
 #### Factories location
 By default, Poser will search the `Tests/Factories` directory for your Factory classes.
 If you have your Factories in a different directory (eg: `Tests/Models/Factories`),
-you can let Poser know about it by editing the `factories_namespace` entry in the poser.php config
+you can let Poser know about it by editing the `factories_namespace` entry in the `poser.php` config
 file.
 
 #### The `->create()` and `->make()` commands
@@ -667,7 +667,7 @@ public function the_user_has_a_name() {
 This error is thrown when Poser cannot find a factory that satifies the requested relationship method call. So, imagine you called `UserFactory::new()->withCustomers(10)();`, but there was no `CustomerFactory`, Poser would throw this error. The solution is to create the Factory. In this case, we could call `php artisan make:poser CustomerFactory` from the terminal to automatically create the factory for us.
 
 The other time this error can crop up is if your Parent Model's relationship method name is different to the Child Model name.
-To illustrate, imaging that we have a `UserFactory` that has a `clients()` method. That method returns a has-many relationship for the `Customer` model, and you have a Poser `CustomerFactory`.
+To illustrate, imaging that we have a `UserFactory` for `User` model that has a `clients()` method. That method returns a has-many relationship for the `Customer` model, and you have a Poser `CustomerFactory`.
 
 When we call `UserFactory::new()->withClients()()`, Poser understands that you're using the `clients()` method on the `User` model, but it can't find a corresponding `ClientFactory` (because, it is in fact called `CustomerFactory`). The solution to this is to resort to standard bindings. So our updated call would be:
 
