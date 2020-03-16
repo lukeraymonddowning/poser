@@ -263,10 +263,13 @@ abstract class Factory
      */
     protected function handleWithRelationship(string $functionName, array $arguments)
     {
-        $this->withRelationships[$this->getRelationshipMethodName($functionName)] = $this->buildRelationshipData(
-            $functionName,
-            $arguments
-        );
+        $this->withRelationships[] = [
+            $this->getRelationshipMethodName($functionName),
+            $this->buildRelationshipData(
+                $functionName,
+                $arguments
+            )
+        ];
     }
 
     /**
@@ -277,10 +280,13 @@ abstract class Factory
      */
     protected function handleForRelationship(string $functionName, array $arguments)
     {
-        $this->forRelationships[$this->getRelationshipMethodName($functionName)] = $this->buildRelationshipData(
-            $functionName,
-            $arguments
-        );
+        $this->forRelationships[] = [
+            $this->getRelationshipMethodName($functionName),
+            $this->buildRelationshipData(
+                $functionName,
+                $arguments
+            )
+        ];
     }
 
     /**
@@ -404,7 +410,9 @@ abstract class Factory
     protected function buildAllWithRelationships($model)
     {
         $this->withRelationships->each(
-            function ($relatedModels, $relationshipName) use ($model) {
+            function ($data) use ($model) {
+                $relationshipName = $data[0];
+                $relatedModels = $data[1];
                 $models = $relatedModels instanceof Factory ? $relatedModels->make() : $relatedModels;
 
                 if ($models instanceof Model) {
@@ -440,7 +448,9 @@ abstract class Factory
     protected function buildAllForRelationships(Model $model)
     {
         $this->forRelationships->each(
-            function ($owningModel, $relationshipName) use ($model) {
+            function ($data) use ($model) {
+                $relationshipName = $data[0];
+                $owningModel = $data[1];
                 $model->{$relationshipName}()->associate(
                     $owningModel instanceof Factory ? $owningModel->create() : $owningModel
                 );
