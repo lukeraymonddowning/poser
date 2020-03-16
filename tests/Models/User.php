@@ -15,4 +15,9 @@ class User extends Model
     {
         return $this->hasMany(Customer::class);
     }
+
+    public function profile()
+    {
+        return $this->hasOne(UserProfile::class);
+    }
 }

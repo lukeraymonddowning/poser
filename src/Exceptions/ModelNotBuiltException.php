@@ -1,15 +1,11 @@
 <?php
 
-
 namespace Lukeraymonddowning\Poser\Exceptions;
 
-
 use Exception;
-use Throwable;
 
 class ModelNotBuiltException extends Exception
 {
-
     public function __construct($factory, $userCalled, $modelName = null)
     {
         $message = "You tried to call '" . $userCalled . "', but it doesn't exist on " .
@@ -20,5 +16,4 @@ class ModelNotBuiltException extends Exception
             class_basename($factory) . ".";
         parent::__construct($message, 0, null);
     }
-
 }
