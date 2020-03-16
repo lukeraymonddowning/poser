@@ -44,6 +44,7 @@ class TestCase extends Orchestra
         $app['config']->set('app.key', '6rE9Nz59bGRbeMATftriyQjrpF7DcOQm');
         $app['config']->set('poser.models_namespace', 'Lukeraymonddowning\\Poser\\Tests\\Models\\');
         $app['config']->set('poser.factories_namespace', 'Lukeraymonddowning\\Poser\\Tests\\Factories\\');
+        $app->setBasePath(realpath(__DIR__ . '/../'));
     }
 
     /**
