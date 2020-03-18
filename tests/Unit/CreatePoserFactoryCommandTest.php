@@ -18,6 +18,7 @@ class CreatePoserFactoryCommandTest extends TestCase
         parent::setUp();
 
         $this->app->setBasePath(realpath(__DIR__ . '/../storage'));
+        $this->app['config']->set('poser.models_namespace', '\\App\\Models\\');
 
         $this->newFactoriesDirectory = str_replace(
             '\\',
@@ -42,26 +43,33 @@ class CreatePoserFactoryCommandTest extends TestCase
         $this->assertStringContainsString('namespace Lukeraymonddowning\Poser\Tests\Factories;', $fileContents);
 
         $this->assertStringNotContainsString('{{ ModelNamespace }}', $fileContents);
-        $this->assertStringContainsString('\Lukeraymonddowning\Poser\Tests\Models\Book[]', $fileContents);
+        $this->assertStringContainsString('\App\Models\Book[]', $fileContents);
 
         $this->assertStringNotContainsString('{{ ClassName }}', $fileContents);
         $this->assertStringContainsString('class BookFactory extends Factory', $fileContents);
     }
 
     /** @test */
-    public function it_fills_up_correct_namespaces()
+    public function it_creates_a_poser_factory_for_a_model_with_custom_namespace_and_fills_up_wildcards()
     {
         $this->assertFalse(File::exists($this->newFactoriesDirectory . 'AuthorFactory.php'));
 
         $this->artisan('make:poser', [
             'name' => 'AuthorFactory',
-            '--model' => '\App\Models\User'
+            '--model' => '\App\Really\Different\ModelsNamespace\User'
         ]);
 
         $this->assertTrue(File::exists($this->newFactoriesDirectory . 'AuthorFactory.php'));
         $fileContents = File::get($this->newFactoriesDirectory . 'AuthorFactory.php');
 
-        $this->markTestSkipped("To be continued...");
+        $this->assertStringNotContainsString('{{ Namespace }}', $fileContents);
+        $this->assertStringContainsString('namespace Lukeraymonddowning\Poser\Tests\Factories;', $fileContents);
+
+        $this->assertStringNotContainsString('{{ ModelNamespace }}', $fileContents);
+        $this->assertStringContainsString('\App\Really\Different\ModelsNamespace\User[]', $fileContents);
+
+        $this->assertStringNotContainsString('{{ ClassName }}', $fileContents);
+        $this->assertStringContainsString('class AuthorFactory extends Factory', $fileContents);
     }
 
     /** @test */
