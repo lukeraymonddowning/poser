@@ -17,6 +17,8 @@ class CreatePoserFactoryCommandTest extends TestCase
     {
         parent::setUp();
 
+        $this->app->setBasePath(realpath(__DIR__ . '/../storage'));
+
         $this->newFactoriesDirectory = str_replace(
             '\\',
             '/',
@@ -45,4 +47,25 @@ class CreatePoserFactoryCommandTest extends TestCase
         $this->assertStringNotContainsString('{{ ClassName }}', $fileContents);
         $this->assertStringContainsString('class BookFactory extends Factory', $fileContents);
     }
+
+    /** @test */
+    public function it_fills_up_correct_namespaces()
+    {
+        $this->assertFalse(File::exists($this->newFactoriesDirectory . 'AuthorFactory.php'));
+
+        $this->artisan('make:poser', [
+            'name' => 'AuthorFactory',
+            '--model' => '\App\Models\User'
+        ]);
+
+        $this->assertTrue(File::exists($this->newFactoriesDirectory . 'AuthorFactory.php'));
+        $fileContents = File::get($this->newFactoriesDirectory . 'AuthorFactory.php');
+
+        $this->markTestSkipped("To be continued...");
+    }
+
+    /** @test */
+//    public function it_creates_database_factory()
+//    {
+////        $spy = $this->spy(FactoryMakeCommand::class);
 }
