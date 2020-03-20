@@ -23,6 +23,6 @@ class FactoryExceptionsTest extends TestCase
     {
         $this->expectException(ArgumentsNotSatisfiableException::class);
 
-        dump(UserFactory::new()->withProfile()->create());
+        UserFactory::new()->withProfile()->create();
     }
 }
