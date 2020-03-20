@@ -71,9 +71,4 @@ class CreatePoserFactoryCommandTest extends TestCase
         $this->assertStringNotContainsString('{{ ClassName }}', $fileContents);
         $this->assertStringContainsString('class AuthorFactory extends Factory', $fileContents);
     }
-
-    /** @test */
-//    public function it_creates_database_factory()
-//    {
-////        $spy = $this->spy(FactoryMakeCommand::class);
 }
