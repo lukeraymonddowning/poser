@@ -118,7 +118,7 @@ abstract class Factory
      *
      * @return $this
      */
-    public function withAttributes(array $attributes)
+    public function withAttributes(...$attributes)
     {
         $this->attributes = $attributes;
 
@@ -195,9 +195,9 @@ abstract class Factory
      *
      * @return \Illuminate\Support\Collection|\Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model[]|\Illuminate\Database\Eloquent\Model
      */
-    public function create(array $attributes = [])
+    public function create(...$attributes)
     {
-        $result = $this->make($attributes);
+        $result = $this->make(...$attributes);
 
         $returnFirstCollectionResultAtEnd = !$result instanceof Collection;
         $result = $returnFirstCollectionResultAtEnd ? collect([$result]) : $result;
@@ -232,13 +232,22 @@ abstract class Factory
      *
      * @return \Illuminate\Support\Collection|\Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model[]|\Illuminate\Database\Eloquent\Model
      */
-    public function make(array $attributes = [])
+    public function make(...$attributes)
     {
-        if ($this->count > 1) {
-            $this->factory->times($this->count);
+        $models = collect([]);
+
+        for ($i = 0; $i < $this->count; $i++) {
+            $attributeMethodData = $this->getDesiredAttributeData($this->attributes, $i);
+            $providedOverrideAttributes = $this->getDesiredAttributeData($attributes, $i);
+
+            $models->push(
+                $this->factory->states($this->states)->make(
+                    array_merge($attributeMethodData, $providedOverrideAttributes)
+                )
+            );
         }
 
-        return $this->factory->states($this->states)->make(array_merge($this->attributes, $attributes));
+        return $models->count() > 1 ? $models : $models->first();
     }
 
     /**
@@ -253,6 +262,23 @@ abstract class Factory
         $this->afterCreating->push($closure);
 
         return $this;
+    }
+
+    /**
+     * Given an array of attribute sets, returns the desired set if available, else the first one available
+     * either through looping or retrieving the first one, or an empty array.
+     *
+     * @param array $attributes   The array of arrays from which to extract an attribute set.
+     * @param int   $desiredIndex The ideal index of the attribute set you would like
+     * @return array|mixed
+     */
+    protected function getDesiredAttributeData(array $attributes, int $desiredIndex)
+    {
+        if (count($attributes) > 0) {
+            $desiredIndex -= (count($attributes) * floor(($desiredIndex) / count($attributes)));
+        }
+
+        return $attributes[$desiredIndex] ?? $attributes[0] ?? [];
     }
 
     /**
@@ -331,15 +357,11 @@ abstract class Factory
             isset($arguments[0]) && is_int($arguments[0]) ? $arguments[0] : 1
         );
 
-        collect($arguments)->filter(
+        $factory->withAttributes(...collect($arguments)->filter(
             function ($argument) {
                 return is_array($argument);
             }
-        )->first(
-            function ($attributes) use ($factory) {
-                $factory->withAttributes($attributes);
-            }
-        );
+        )->toArray());
 
         return $factory;
     }
