@@ -203,6 +203,24 @@ public function user_has_customers()
 }
 ```
 
+To take this a step further, imagine that we want 10 of our customers to be called "Joe Bloggs", 10 to be called 
+"Jane Bloggs" and 10 to be called "John Doe". Poser allows multiple attribute arrays to be passed to the `withAttributes`,
+`make` and `create` methods, along with any method using magic bindings, to facilitate this:
+
+```php
+/** @test */
+public function user_has_customers()
+{
+    $user = UserFactory::new()
+        ->withCustomers(30, ["name" => "Joe Bloggs"], ["name" => "Jane Bloggs"], ["name" => "John Doe"])
+        ->create();
+
+    $this->assertCount(10, $user->customers->filter(fn($customer) => $customer->name == "Joe Bloggs"));
+    $this->assertCount(10, $user->customers->filter(fn($customer) => $customer->name == "Jane Bloggs"));
+    $this->assertCount(10, $user->customers->filter(fn($customer) => $customer->name == "John Doe"));
+}
+```
+
 For HasOne relationships, like our `User`'s Address, we can do very much the same:
 
 ```php
@@ -540,7 +558,7 @@ Creates a new instance of the factory. If you only want to create one model, use
 Creates a new instance of the factory, but informs the factory that you will be creating multiple models.
 Use this to instantiate the class when you wish to create multiple entries in the database.
 
-#### `->create(array $attributes)` or `()`
+#### `->create(...$attributes)` or `(...$attributes)`
 Similar to the Laravel factory `create` command, this will create the models, persisting them to the database.
 You may pass an associative array of column names with desired values, which will be applied to the 
 created models. You can optionally call create by invoking the Factory. This allows for a shorter syntax.
@@ -549,14 +567,23 @@ If you're interacting with the models directly in your tests, rather than re-fet
 you can omit the `create` call completely. Poser will automatically call the `create` method for you when you
 try to access a property or call a method on the model(s)/collection.
 
-#### `->make(array $attributes)`
+If you would like to apply different attributes to each model that will be created, you may pass as many attribute
+arrays as separate parameters as desired.
+
+#### `->make(...$attributes)`
 Similar to the Laravel factory `make` command, this will make the models without persisting them to the 
 database. You may pass an associative array of column names with desired values, which will be applied to the 
 created models.
 
-#### `->withAttributes(array $attributes)`
+If you would like to apply different attributes to each model that will be created, you may pass as many attribute
+arrays as separate parameters as desired.
+
+#### `->withAttributes(...$attributes)`
 You may pass an associative array of column names with desired values, which will be applied to the 
 created models.
+
+If you would like to apply different attributes to each model that will be created, you may pass as many attribute
+arrays as separate parameters as desired.
 
 #### `->state(string $state)` or `->as(string $state)`
 You may pass a factory state that you have defined in your laravel model factory, which will be applied
@@ -638,31 +665,32 @@ public function user_has_customers()
 }
 ```
 
+#### Multiple attributes
+Often, it is useful to be able to provide multiple attributes when dealing with multiple models. Poser is smart about
+this and allows you to do some very powerful world-building with 0 effort. Imagine we want to create 3 users all with 
+different names. No problem:
+
+```php
+$users = UserFactory::times(3)->create(["name" => "Joe"], ["name" => "Jane"], ["name" => "Jimmy"]);
+```
+
+You can do this with the `create`, `make`, `withAttributes` and magic bindings such as `withCustomers`. The latter
+would look like this:
+
+```php
+UserFactory::new()->withCustomers(3, ['name' => "Joe"], ["name" => "Jane"], ["name" => "Jimmy"])();
+```
+
+If you provide fewer attribute sets than models, Poser will loop through the attribute sets for you. So in the following
+example...
+
+```php
+$users = UserFactory::times(10)->create(["name" => "Joe"], ["name" => "Jane"]);
+``` 
+
+...Poser will create 5 users called Joe and 5 users called Jane.
+
 ### Troubleshooting
-#### I keep getting a `ModelNotBuiltException` when trying to access properties or functions on the model I created
-This exception is thrown when you have forgotten to call `create()` or `()` on the factory. As such, you're actually
-trying to access a property or function on the factory, not the model. Just pop `create()` or `()` on the end of the statement and it should all work as expected. Here's an example...
-
-```php
-/** @test */
-public function the_user_has_a_name() {
-    $user = UserFactory::new()->withAttributes([ 'name' => "John Doe" ])->withCustomers(10);
-    
-    $this->assertEquals("John Doe", $user->name); // Whoops! This will throw a ModelNotBuiltException
-}
-```
-
-...and here's the solution
-```php
-/** @test */
-public function the_user_has_a_name() {
-    $user = UserFactory::new()->withAttributes([ 'name' => "John Doe" ])
-        ->withCustomers(10)->create(); // <- note the call to `create()` at the end
-    
-    $this->assertEquals("John Doe", $user->name); // Hoorah! This will pass
-}
-```
-
 #### When using magic binding, I get an `ArgumentsNotSatisfiableException`
 This error is thrown when Poser cannot find a factory that satifies the requested relationship method call. So, imagine you called `UserFactory::new()->withCustomers(10)();`, but there was no `CustomerFactory`, Poser would throw this error. The solution is to create the Factory. In this case, we could call `php artisan make:poser CustomerFactory` from the terminal to automatically create the factory for us.
 

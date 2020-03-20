@@ -357,15 +357,11 @@ abstract class Factory
             isset($arguments[0]) && is_int($arguments[0]) ? $arguments[0] : 1
         );
 
-        collect($arguments)->filter(
+        $factory->withAttributes(...collect($arguments)->filter(
             function ($argument) {
                 return is_array($argument);
             }
-        )->first(
-            function ($attributes) use ($factory) {
-                $factory->withAttributes($attributes);
-            }
-        );
+        )->toArray());
 
         return $factory;
     }
