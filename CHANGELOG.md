@@ -1,4 +1,4 @@
-#2.4.0-beta
+# 2.4.0-beta
 Sometimes, you want to specify different arguments for each model you create. For example, imagine we wanted to create 30 users, 10 called "Bob", 10 called "Barry" and 10 called "Gordon". Poser now allows that with the following syntax:
 
 ```php
