@@ -373,6 +373,22 @@ public function a_user_can_have_many_roles() {
 }
 ```
 
+For instances where you would like to save different pivot data on each related model, `withPivotAttributes()` accepts
+multiple attribute sets:
+
+```php
+/** @test */
+public function a_user_can_have_many_roles() {
+    $user = UserFactory::new()->withRoles(RoleFactory::times(3)->withPivotAttributes(
+        ['expires_at' => now()->addDay()],
+        ['expires_at' => now()->addDays(2)],
+        ['expires_at' => now()->addDays(3)]
+    ))();
+
+    // ...assertions go here
+}
+``` 
+
 It is important to note that you should not use the `make()`, `create()` or `invoke()` methods on the relationship factory
 when adding pivot attributes, as Poser will have no way to access them when saving the models.
 
@@ -593,10 +609,13 @@ to the created models.
 Similar to `->state(string $state)`, but allows you to pass in multiple states that will all be applied
 to the created models.
 
-#### `->withPivotAttributes(array $attributes)`
+#### `->withPivotAttributes(...$attributes)`
 When working with Many-to-Many relationships, you may want to store data on the pivot table. You may use
 this method to do so, passing in an associative array of column names with desired values. This should
 be called on the related factory, not the root-level factory.
+
+If you would like to apply different pivot attributes to each model that will be created, you may pass as many attribute
+arrays as separate parameters as desired.
 
 #### `->afterCreating(Closure $closure)`
 Allows you to provide a hook that will be called when the given factory has created its model(s). This 
