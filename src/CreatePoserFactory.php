@@ -2,14 +2,13 @@
 
 namespace Lukeraymonddowning\Poser;
 
-use Illuminate\Support\Str;
 use Illuminate\Console\GeneratorCommand;
-use Illuminate\Support\Facades\File;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 
 class CreatePoserFactory extends GeneratorCommand
 {
-
     protected $signature = 'make:poser {name? : The name of the Poser Factory}
                                        {--m|model= : The model that this factory is linked too}
                                        {--f|factory : Also create the Laravel database factory}';
@@ -53,11 +52,9 @@ class CreatePoserFactory extends GeneratorCommand
             ? '\\' . $this->qualifyClass($this->option('model'))
             : $expectedModelNameSpace;
 
-        $destinationDirectory = base_path() . "/" . str_replace("\\", "/", factoriesNamespace());
+        $destinationDirectory = base_path(str_replace("\\", "/", factoriesNamespace()));
 
-        if (!File::exists($destinationDirectory)) {
-            File::makeDirectory($destinationDirectory);
-        }
+        File::ensureDirectoryExists($destinationDirectory);
 
         $destination = $destinationDirectory . $factoryName . ".php";
 
@@ -74,7 +71,7 @@ class CreatePoserFactory extends GeneratorCommand
 
         File::copy($this->getStub($stubVariant), $destination);
 
-        $value = file_get_contents($destination);
+        $value = File::get($destination);
 
         $namespace = str_replace('/', '\\', factoriesNamespace());
         if (Str::endsWith($namespace, '\\')) {
@@ -95,7 +92,7 @@ class CreatePoserFactory extends GeneratorCommand
             $value
         );
 
-        file_put_contents($destination, $valueFormatted);
+        File::put($destination, $valueFormatted);
 
         $this->info($factoryName . " successfully created at " . $destination);
         $this->line("");

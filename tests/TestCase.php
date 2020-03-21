@@ -44,6 +44,7 @@ class TestCase extends Orchestra
         $app['config']->set('app.key', '6rE9Nz59bGRbeMATftriyQjrpF7DcOQm');
         $app['config']->set('poser.models_namespace', 'Lukeraymonddowning\\Poser\\Tests\\Models\\');
         $app['config']->set('poser.factories_namespace', 'Lukeraymonddowning\\Poser\\Tests\\Factories\\');
+        $app->setBasePath(realpath(__DIR__ . '/../'));
     }
 
     /**
@@ -51,16 +52,37 @@ class TestCase extends Orchestra
      */
     protected function createTables()
     {
-        Schema::create(
-            'users',
-            function (Blueprint $table) {
-                $table->increments('id');
-                $table->string('name');
-                $table->string('email');
-                $table->dateTime('email_verified_at')->nullable();
-                $table->boolean('active');
-                $table->timestamps();
-            }
-        );
+        Schema::create('users', function (Blueprint $table) {
+            $table->increments('id');
+            $table->string('name');
+            $table->string('email');
+            $table->dateTime('email_verified_at')->nullable();
+            $table->boolean('active');
+            $table->timestamps();
+        });
+
+        Schema::create('addresses', function (Blueprint $table) {
+            $table->increments('id');
+            $table->string('line_1');
+            $table->unsignedInteger('user_id');
+            $table->timestamps();
+
+            $table->foreign('user_id')
+                ->references('id')
+                ->on('users')
+                ->onDelete('cascade');
+        });
+
+        Schema::create('customers', function (Blueprint $table) {
+            $table->increments('id');
+            $table->string('name');
+            $table->unsignedInteger('user_id');
+            $table->timestamps();
+
+            $table->foreign('user_id')
+                ->references('id')
+                ->on('users')
+                ->onDelete('cascade');
+        });
     }
 }
