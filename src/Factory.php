@@ -134,7 +134,7 @@ abstract class Factory
      *
      * @return $this
      */
-    public function withPivotAttributes(array $attributes)
+    public function withPivotAttributes(...$attributes)
     {
         $this->pivotAttributes = $attributes;
 
@@ -442,8 +442,8 @@ abstract class Factory
                 }
 
                 $models->each(
-                    function ($relatedModel) use ($model, $relationshipName, $relatedModels) {
-                        $model->{$relationshipName}()->save($relatedModel, $relatedModels->pivotAttributes ?? []);
+                    function ($relatedModel, $index) use ($model, $relationshipName, $relatedModels) {
+                        $model->{$relationshipName}()->save($relatedModel, $this->getDesiredAttributeData($relatedModels->pivotAttributes ?? [], $index));
 
                         if ($relatedModels instanceof Factory) {
                             $relatedModels->buildAllWithRelationships($relatedModel);
