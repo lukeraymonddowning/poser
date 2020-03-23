@@ -2,15 +2,14 @@
 
 namespace Lukeraymonddowning\Poser;
 
-use ReflectionClass;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\File;
-use Illuminate\Database\Eloquent\Model;
+use ReflectionException;
 use Illuminate\Console\GeneratorCommand;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 
 class CreatePoserFactory extends GeneratorCommand
 {
-
     protected $signature = 'make:poser {name? : The name of the Poser Factory}
                                        {--m|model= : The model that this factory is linked too}
                                        {--f|factory : Also create the Laravel database factory}';
@@ -51,8 +50,21 @@ class CreatePoserFactory extends GeneratorCommand
 
         $expectedModelNameSpace = '\\' . modelsNamespace() . Str::beforeLast($factoryName, 'Factory');
 
-        $modelReflection = new ReflectionClass($this->option('model') ?? $expectedModelNameSpace);
-        $linkedModelNamespace = '\\' . $modelReflection->getName();
+        // TODO - Decide if this actually should be caught
+        if (($optionModel = $this->option('model')) !== null) {
+            try {
+                $modelReflection = new \ReflectionClass($optionModel);
+                $linkedModelNamespace = '\\' . $modelReflection->getName();
+            } catch (ReflectionException $e) {
+                $linkedModelNamespace = $expectedModelNameSpace;
+            }
+        } else {
+            $linkedModelNamespace = $expectedModelNameSpace;
+        }
+
+        // TODO - or just choose this instead
+        // $modelReflection = new \ReflectionClass($this->option('model') ?? $expectedModelNameSpace);
+        // $linkedModelNamespace = '\\' . $modelReflection->getName();
 
         $destinationDirectory = base_path(str_replace("\\", "/", factoriesNamespace()));
 
