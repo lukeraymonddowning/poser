@@ -742,7 +742,7 @@ CustomerFactory::new()->create();
 to the customer. However, if we call...
 
 ```php
-CustomerFactory::new()->withUser(UserFactory::new()->withAttributes(["name" => "John Doe"]))->create();
+CustomerFactory::new()->forUser(UserFactory::new()->withAttributes(["name" => "John Doe"]))->create();
 ```
 
 ...the default will be ignored and instead a `User` called "John Doe" will be assigned to the `Customer`.
@@ -833,7 +833,7 @@ class CustomerFactory extends Factory {
 
     public function defaultForUser()
     {
-        return UserFactory::new()->withAttributes(['name' => "John Doe"]);
+        return UserFactory::new();
     }
 
 }
