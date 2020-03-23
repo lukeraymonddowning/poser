@@ -29,12 +29,16 @@ class CreatePoserFactoryCommandTest extends TestCase
     /** @test */
     public function it_creates_a_poser_factory_and_fills_up_wildcards()
     {
+        $this->artisan('make:poser', ['name' => 'NotARealClass'])->assertExitCode(1);
+
         $this->assertFalse(File::exists($this->newFactoriesDirectory . 'UserFactory.php'));
 
-        $this->artisan('make:poser', ['name' => 'UserFactory']);
+        $this->artisan('make:poser', ['name' => 'UserFactory'])->assertExitCode(0);
 
         $this->assertTrue(File::exists($this->newFactoriesDirectory . 'UserFactory.php'));
         $fileContents = File::get($this->newFactoriesDirectory . 'UserFactory.php');
+
+        $this->artisan('make:poser', ['name' => 'UserFactory'])->assertExitCode(2);
 
         $this->assertStringNotContainsString('{{ Namespace }}', $fileContents);
         $this->assertStringContainsString('namespace Lukeraymonddowning\Poser\Tests\Factories;', $fileContents);
@@ -49,6 +53,11 @@ class CreatePoserFactoryCommandTest extends TestCase
     /** @test */
     public function it_creates_a_poser_factory_for_a_model_with_custom_namespace_and_fills_up_wildcards()
     {
+        $this->artisan('make:poser', [
+            'name' => 'Name',
+            '--model' => '\App\NotARealClass'
+        ])->assertExitCode(1);
+
         $this->assertFalse(File::exists($this->newFactoriesDirectory . 'AuthorFactory.php'));
 
         $this->artisan('make:poser', [
@@ -58,6 +67,11 @@ class CreatePoserFactoryCommandTest extends TestCase
 
         $this->assertTrue(File::exists($this->newFactoriesDirectory . 'AuthorFactory.php'));
         $fileContents = File::get($this->newFactoriesDirectory . 'AuthorFactory.php');
+
+        $this->artisan('make:poser', [
+            'name' => 'AuthorFactory',
+            '--model' => '\Lukeraymonddowning\Poser\Tests\Models\Address'
+        ])->assertExitCode(2);
 
         $this->assertStringNotContainsString('{{ Namespace }}', $fileContents);
         $this->assertStringContainsString('namespace Lukeraymonddowning\Poser\Tests\Factories;', $fileContents);

@@ -7,6 +7,7 @@ use Illuminate\Console\GeneratorCommand;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use ReflectionException;
 
 class CreatePoserFactory extends GeneratorCommand
 {
@@ -48,8 +49,15 @@ class CreatePoserFactory extends GeneratorCommand
 
         $expectedModelNameSpace = '\\' . modelsNamespace() . Str::beforeLast($factoryName, 'Factory');
 
-        $modelReflection = new \ReflectionClass($this->option('model') ?? $expectedModelNameSpace);
-        $linkedModelNamespace = '\\' . $modelReflection->getName();
+        try {
+            $modelReflection = new \ReflectionClass($this->option('model') ?? $expectedModelNameSpace);
+            $linkedModelNamespace = '\\' . $modelReflection->getName();
+        } catch (ReflectionException $e) {
+            $this->error('Could not locate '
+            . ($this->option('model') ?? $expectedModelNameSpace)
+            . ' at configured namespace');
+            return 1;
+        }
 
         $destinationDirectory = base_path(factoriesDirectory());
 
