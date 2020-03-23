@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit;
+namespace Lukeraymonddowning\Poser\Tests\Unit;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
@@ -56,7 +56,7 @@ class CreatePoserFactoryCommandTest extends TestCase
 
         $this->artisan('make:poser', [
             'name' => 'AuthorFactory',
-            '--model' => '\App\Really\Different\ModelsNamespace\User'
+            '--model' => '\Lukeraymonddowning\Poser\Tests\Models\User'
         ]);
 
         $this->assertTrue(File::exists($this->newFactoriesDirectory . 'AuthorFactory.php'));
@@ -66,7 +66,7 @@ class CreatePoserFactoryCommandTest extends TestCase
         $this->assertStringContainsString('namespace Lukeraymonddowning\Poser\Tests\Factories;', $fileContents);
 
         $this->assertStringNotContainsString('{{ ModelNamespace }}', $fileContents);
-        $this->assertStringContainsString('\App\Really\Different\ModelsNamespace\User[]', $fileContents);
+        $this->assertStringContainsString('\Lukeraymonddowning\Poser\Tests\Models\User[]', $fileContents);
 
         $this->assertStringNotContainsString('{{ ClassName }}', $fileContents);
         $this->assertStringContainsString('class AuthorFactory extends Factory', $fileContents);

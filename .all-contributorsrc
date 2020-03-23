@@ -32,6 +32,24 @@
       "contributions": [
         "ideas"
       ]
+    },
+    {
+      "login": "bradroberts",
+      "name": "Brad Roberts",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/362608?v=4",
+      "profile": "https://github.com/bradroberts",
+      "contributions": [
+        "ideas"
+      ]
+    },
+    {
+      "login": "RBotfield",
+      "name": "Rhys Botfield",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/17741482?v=4",
+      "profile": "http://rhysbotfield.co.uk",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
