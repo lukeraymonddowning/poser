@@ -6,8 +6,4 @@ use Lukeraymonddowning\Poser\Factory;
 
 class CustomerFactory extends Factory
 {
-    public function defaultUser()
-    {
-        return UserFactory::new();
-    }
 }

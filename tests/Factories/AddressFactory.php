@@ -6,8 +6,4 @@ use Lukeraymonddowning\Poser\Factory;
 
 class AddressFactory extends Factory
 {
-    public function defaultUser()
-    {
-        return UserFactory::new();
-    }
 }
