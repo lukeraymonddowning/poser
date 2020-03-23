@@ -19,14 +19,11 @@ class CreatePoserFactoryCommandTest extends TestCase
 
         $this->app->setBasePath(realpath(__DIR__ . '/../storage'));
         $this->app['config']->set('poser.models_namespace', '\\App\\Models\\');
+        $this->app['config']->set('poser.factories_directory', 'NewTestsDir/Factories/');
 
-        $this->newFactoriesDirectory = str_replace(
-            '\\',
-            '/',
-            base_path('Lukeraymonddowning\\Poser\\Tests\\Factories\\')
-        );
+        $this->newFactoriesDirectory = base_path(config('poser.factories_directory'));
 
-        File::deleteDirectory(base_path('Lukeraymonddowning'));
+        File::deleteDirectory(base_path('NewTestsDir'));
     }
 
     /** @test */
@@ -70,5 +67,37 @@ class CreatePoserFactoryCommandTest extends TestCase
 
         $this->assertStringNotContainsString('{{ ClassName }}', $fileContents);
         $this->assertStringContainsString('class AuthorFactory extends Factory', $fileContents);
+    }
+
+    /** @test */
+    public function it_creates_multiple_poser_factories()
+    {
+        $this->artisan('make:poser')->assertExitCode(1); //Couldn't find any classes at the namespace
+
+        $oldNamespace = config('poser.models_namespace');
+        $this->app['config']->set('poser.models_namespace', 'Lukeraymonddowning\\Poser\\Tests\\Models\\');
+
+        $this->assertEquals(0, count(File::glob($this->newFactoriesDirectory . '*.php')));
+
+        $this->artisan('make:poser')->assertExitCode(0); //Models created, success response
+        $this->assertGreaterThan(1, count(File::glob($this->newFactoriesDirectory . '*.php')));
+
+        //Models existed but didn't create any Factories since they already existed
+        $this->artisan('make:poser')->assertExitCode(2);
+
+        $this->app['config']->set('poser.models_namespace', $oldNamespace);
+
+        //Run the rest of the file checks
+        $this->assertTrue(File::exists($this->newFactoriesDirectory . 'UserProfileFactory.php'));
+        $fileContents = File::get($this->newFactoriesDirectory . 'UserProfileFactory.php');
+
+        $this->assertStringNotContainsString('{{ Namespace }}', $fileContents);
+        $this->assertStringContainsString('namespace Lukeraymonddowning\Poser\Tests\Factories;', $fileContents);
+
+        $this->assertStringNotContainsString('{{ ModelNamespace }}', $fileContents);
+        $this->assertStringContainsString('\Lukeraymonddowning\Poser\Tests\Models\UserProfile[]', $fileContents);
+
+        $this->assertStringNotContainsString('{{ ClassName }}', $fileContents);
+        $this->assertStringContainsString('class UserProfileFactory extends Factory', $fileContents);
     }
 }
