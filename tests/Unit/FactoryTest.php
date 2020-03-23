@@ -124,7 +124,7 @@ class FactoryTest extends TestCase
     {
         UserFactory::times(3)
             ->withAttributes(['name' => 'test'])
-            ->withAddress()
+            ->hasAddress()
             ->withCustomers(
                 CustomerFactory::times(5)
             )
@@ -133,5 +133,35 @@ class FactoryTest extends TestCase
         $this->assertEquals(3, User::count());
         $this->assertEquals(3, Address::count());
         $this->assertEquals(15, Customer::count());
+    }
+
+    /** @test */
+    public function it_creates_models_using_multiple_attributes_sets()
+    {
+        $users = UserFactory::times(2)->create(['name' => 'Saul'], ['name' => 'Kim']);
+
+        $this->assertEquals('Saul', $users[0]->name);
+        $this->assertEquals('Kim', $users[1]->name);
+    }
+
+    /** @test */
+    public function it_creates_models_using_multiple_attributes_sets_in_loop()
+    {
+        $users = UserFactory::times(5)->create(['name' => 'Gustavo'], ['name' => 'Hector']);
+
+        $this->assertEquals('Gustavo', $users[0]->name);
+        $this->assertEquals('Hector', $users[1]->name);
+        $this->assertEquals('Gustavo', $users[2]->name);
+        $this->assertEquals('Hector', $users[3]->name);
+        $this->assertEquals('Gustavo', $users[4]->name);
+    }
+
+    /** @test */
+    public function it_creates_relationships_using_multiple_attributes_sets()
+    {
+        $user = UserFactory::new()->withCustomers(2, ['name' => 'Walter'], ['name' => 'Jesse'])();
+
+        $this->assertEquals('Walter', $user->customers[0]->name);
+        $this->assertEquals('Jesse', $user->customers[1]->name);
     }
 }
