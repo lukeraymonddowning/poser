@@ -3,7 +3,6 @@
 namespace Lukeraymonddowning\Poser;
 
 use HaydenPierce\ClassFinder\ClassFinder;
-use ReflectionException;
 use Illuminate\Console\GeneratorCommand;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\File;
@@ -49,21 +48,8 @@ class CreatePoserFactory extends GeneratorCommand
 
         $expectedModelNameSpace = '\\' . modelsNamespace() . Str::beforeLast($factoryName, 'Factory');
 
-        // TODO - Decide if this actually should be caught
-        if (($optionModel = $this->option('model')) !== null) {
-            try {
-                $modelReflection = new \ReflectionClass($optionModel);
-                $linkedModelNamespace = '\\' . $modelReflection->getName();
-            } catch (ReflectionException $e) {
-                $linkedModelNamespace = $expectedModelNameSpace;
-            }
-        } else {
-            $linkedModelNamespace = $expectedModelNameSpace;
-        }
-
-        // TODO - or just choose this instead
-        // $modelReflection = new \ReflectionClass($this->option('model') ?? $expectedModelNameSpace);
-        // $linkedModelNamespace = '\\' . $modelReflection->getName();
+        $modelReflection = new \ReflectionClass($this->option('model') ?? $expectedModelNameSpace);
+        $linkedModelNamespace = '\\' . $modelReflection->getName();
 
         $destinationDirectory = base_path(factoriesDirectory());
 
