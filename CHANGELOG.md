@@ -1,3 +1,6 @@
+# 2.6.0-beta
+Added support for default attributes
+
 # 2.5.0-beta
 Added multiple attribute set support for the `withPivotAttributes()` method, similar to standard attributes in 2.4.0-beta.
 

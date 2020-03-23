@@ -3,6 +3,9 @@
 
 namespace Lukeraymonddowning\Poser;
 
+use Closure;
+use ReflectionClass;
+use ReflectionMethod;
 use Mockery\Exception;
 use Illuminate\Support\Str;
 use Illuminate\Support\Collection;
@@ -25,7 +28,8 @@ abstract class Factory
         $attributes = [],
         $pivotAttributes = [],
         $states = [],
-        $createdInstance;
+        $createdInstance,
+        $defaultsToIgnore;
 
     public $factory;
 
@@ -60,6 +64,7 @@ abstract class Factory
         $this->withRelationships = collect([]);
         $this->forRelationships = collect([]);
         $this->afterCreating = collect([]);
+        $this->defaultsToIgnore = collect([]);
     }
 
     /**
@@ -77,15 +82,7 @@ abstract class Factory
 
     public function __call(string $name, array $arguments)
     {
-        if (Str::startsWith($name, ['with', 'has'])) {
-            $this->handleWithRelationship($name, $arguments);
-
-            return $this;
-        }
-
-        if (Str::startsWith($name, 'for')) {
-            $this->handleForRelationship($name, $arguments);
-
+        if ($this->handleRelationship($name, $arguments)) {
             return $this;
         }
 
@@ -186,6 +183,17 @@ abstract class Factory
         return $this;
     }
 
+    public function withoutDefaults(...$defaultsToIgnore)
+    {
+        if (empty($defaultsToIgnore)) {
+            $this->defaultsToIgnore->push("*");
+        }
+
+        $this->defaultsToIgnore = $this->defaultsToIgnore->merge(collect($defaultsToIgnore));
+
+        return $this;
+    }
+
     /**
      * Persists the model/s to the database, then returns it/them.
      * This is also the stage where all requested relationships will be bound to the model/s.
@@ -193,10 +201,12 @@ abstract class Factory
      * @param array $attributes An associative array of column names and values, which will be applied to the model/s
      *                          when it/they are created.
      *
-     * @return \Illuminate\Support\Collection|\Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model[]|\Illuminate\Database\Eloquent\Model
+     * @return Collection|\Illuminate\Database\Eloquent\Collection|Model[]|Model
      */
     public function create(...$attributes)
     {
+        $this->handleDefaultRelationships();
+
         $result = $this->make(...$attributes);
 
         $returnFirstCollectionResultAtEnd = !$result instanceof Collection;
@@ -230,7 +240,7 @@ abstract class Factory
      * @param array $attributes An associative array of column names and values, which will be applied to the model/s
      *                          when it/they are made.
      *
-     * @return \Illuminate\Support\Collection|\Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model[]|\Illuminate\Database\Eloquent\Model
+     * @return Collection|\Illuminate\Database\Eloquent\Collection|Model[]|Model
      */
     public function make(...$attributes)
     {
@@ -253,11 +263,11 @@ abstract class Factory
     /**
      * Provide a closure that will be called after the factory has created the record(s)
      *
-     * @param \Closure $closure
+     * @param Closure $closure
      *
      * @return $this
      */
-    public function afterCreating(\Closure $closure)
+    public function afterCreating(Closure $closure)
     {
         $this->afterCreating->push($closure);
 
@@ -282,14 +292,55 @@ abstract class Factory
     }
 
     /**
+     * @param string $functionName
+     * @param array  $arguments
+     * @return bool True if the relationship was handled, or false if it couldn't be handled.
+     */
+    protected function handleRelationship(string $functionName, array $arguments)
+    {
+        return $this->handleWithRelationship($functionName, $arguments) ||
+            $this->handleForRelationship($functionName, $arguments);
+    }
+
+    /**
      * Prepares a `with[RelationshipName]` by parsing it and storing it until the factory calls `create()`.
      *
      * @param string $functionName The name of the function that was called by the user.
      * @param array  $arguments    The arguments that were passed to the function.
+     * @return bool True if the relationship was handled, else false.
      */
     protected function handleWithRelationship(string $functionName, array $arguments)
     {
-        $this->withRelationships[] = [
+        if (!Str::startsWith($functionName, ['with', 'has'])) {
+            return false;
+        }
+
+        $this->addRelationship($this->withRelationships, $functionName, $arguments);
+
+        return true;
+    }
+
+    /**
+     * Prepares a `for[RelationshipName]` by parsing it and storing it until the factory calls `create()`.
+     *
+     * @param string $functionName The name of the function that was called by the user.
+     * @param array  $arguments    The arguments that were passed to the function.
+     * @return bool True if the relationship was handled, else false.
+     */
+    protected function handleForRelationship(string $functionName, array $arguments)
+    {
+        if (!Str::startsWith($functionName, 'for')) {
+            return false;
+        }
+
+        $this->addRelationship($this->forRelationships, $functionName, $arguments);
+
+        return true;
+    }
+
+    protected function addRelationship(Collection $relationshipArray, string $functionName, array $arguments)
+    {
+        $relationshipArray[] = [
             $this->getRelationshipMethodName($functionName),
             $this->buildRelationshipData(
                 $functionName,
@@ -298,21 +349,73 @@ abstract class Factory
         ];
     }
 
-    /**
-     * Prepares a `for[RelationshipName]` by parsing it and storing it until the factory calls `create()`.
-     *
-     * @param string $functionName The name of the function that was called by the user.
-     * @param array  $arguments    The arguments that were passed to the function.
-     */
-    protected function handleForRelationship(string $functionName, array $arguments)
+    protected function handleDefaultRelationships()
     {
-        $this->forRelationships[] = [
-            $this->getRelationshipMethodName($functionName),
-            $this->buildRelationshipData(
-                $functionName,
-                $arguments
-            )
-        ];
+        $this->getDefaultMethods()->each(
+            function ($defaultMethod) {
+                if (!$this->mayHandleDefaultRelationship($defaultMethod)) {
+                    return;
+                }
+
+                $this->handleRelationship(
+                    $this->stripDefaultFromMethodName($defaultMethod),
+                    [call_user_func([$this, $defaultMethod])]
+                );
+            }
+        );
+    }
+
+    protected function mayHandleDefaultRelationship($defaultMethodName)
+    {
+        $relationshipMethodName = $this->getRelationshipMethodName(
+            $this->stripDefaultFromMethodName($defaultMethodName)
+        );
+
+        return !$this->isInIgnoreList($relationshipMethodName) &&
+            collect([$this->withRelationships, $this->forRelationships])
+                ->filter(
+                    function ($relationships) use ($relationshipMethodName) {
+                        return $relationships->filter(
+                            function ($withRelationship) use ($relationshipMethodName) {
+                                return $withRelationship[0] == $relationshipMethodName;
+                            }
+                        )->isNotEmpty();
+                    }
+                )->isEmpty();
+    }
+
+    protected function isInIgnoreList(string $relationshipMethodName)
+    {
+        return $this->defaultsToIgnore->contains("*") || $this->defaultsToIgnore->contains($relationshipMethodName);
+    }
+
+    /**
+     * @param ReflectionClass $mirror
+     * @return Collection
+     */
+    protected function getDefaultMethods(): Collection
+    {
+        $mirror = new ReflectionClass($this);
+
+        return collect($mirror->getMethods(ReflectionMethod::IS_PUBLIC))
+            ->map(
+                function ($method) {
+                    return $method->name;
+                }
+            )->filter(
+                function ($method) {
+                    return Str::startsWith($method, 'default');
+                }
+            );
+    }
+
+    /**
+     * @param string $methodName The method name to strip the default keyword from.
+     * @return string The method name without the 'default' prefix, converted to camel case.
+     */
+    public function stripDefaultFromMethodName(string $methodName)
+    {
+        return Str::camel(Str::after($methodName, 'default'));
     }
 
     /**
@@ -357,11 +460,13 @@ abstract class Factory
             isset($arguments[0]) && is_int($arguments[0]) ? $arguments[0] : 1
         );
 
-        $factory->withAttributes(...collect($arguments)->filter(
+        $factory->withAttributes(
+            ...collect($arguments)->filter(
             function ($argument) {
                 return is_array($argument);
             }
-        )->toArray());
+        )->toArray()
+        );
 
         return $factory;
     }
@@ -443,7 +548,13 @@ abstract class Factory
 
                 $models->each(
                     function ($relatedModel, $index) use ($model, $relationshipName, $relatedModels) {
-                        $model->{$relationshipName}()->save($relatedModel, $this->getDesiredAttributeData($relatedModels->pivotAttributes ?? [], $index));
+                        $model->{$relationshipName}()->save(
+                            $relatedModel,
+                            $this->getDesiredAttributeData(
+                                isset($relatedModels->pivotAttributes) ? $relatedModels->pivotAttributes : [],
+                                $index
+                            )
+                        );
 
                         if ($relatedModels instanceof Factory) {
                             $relatedModels->buildAllWithRelationships($relatedModel);
@@ -472,10 +583,11 @@ abstract class Factory
         $this->forRelationships->each(
             function ($data) use ($model) {
                 $relationshipName = $data[0];
-                $owningModel = $data[1];
-                $model->{$relationshipName}()->associate(
-                    $owningModel instanceof Factory ? $owningModel->create() : $owningModel
-                );
+                $cachedLocation = "PoserForRelationship_" . $relationshipName;
+                if (!isset($this->$cachedLocation)) {
+                    $this->$cachedLocation = $data[1] instanceof Factory ? $data[1]->create() : $data[1];
+                }
+                $model->{$relationshipName}()->associate($this->$cachedLocation);
             }
         );
 
@@ -487,8 +599,8 @@ abstract class Factory
      *
      * The created model will be passed into the closure as the first param
      *
-     * @param \Illuminate\Support\Collection $result
-     * @param Model|null                     $model
+     * @param Collection $result
+     * @param Model|null $model
      */
     protected function processAfterCreating(Collection $result, Model $model = null)
     {

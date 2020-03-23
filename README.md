@@ -625,6 +625,12 @@ the parent model.
 The closure will be provided with the created model as the first parameter. If `afterCreating()` is called
 on a relationship, it will also be given the parent model as the second parameter.
 
+#### `->withoutDefaults(...$defaultsToIgnore)`
+If you would like to ignore certain Poser defaults for a given test, you may chain this method onto your Poser Factory
+call. If you would like to ignore all defaults, simply call this method with no parameters.
+
+`$usersWithoutDefaultCustomers = UserFactory::new()->withoutDefaults('customers')->create();`
+
 ### `php artisan make:poser` API
 
 If no arguments are passed to the command, Poser will attempt to create matching factories for every model in your 
@@ -709,6 +715,75 @@ $users = UserFactory::times(10)->create(["name" => "Joe"], ["name" => "Jane"]);
 
 ...Poser will create 5 users called Joe and 5 users called Jane.
 
+#### Default Relationships
+After using Poser for a while, you may wish to provide default relationships that should be applied every time we create
+a model. For example, in our examples, a `Customer` requires a related `User` model. To facilitate this, Poser understands
+a `default[RelationshipType][RelationshipMethodName]` syntax inside Poser Factories. To illustrate:
+
+```php
+class CustomerFactory extends Factory
+{
+
+    public function defaultForUser()
+    {
+        return UserFactory::new()->withAttributes(["name" => "Joe Bloggs"]);
+    }
+
+}
+```
+
+Now, every time we call...
+
+```php
+CustomerFactory::new()->create();
+```
+
+...a `User` called `Joe Bloggs` will be automatically assigned
+to the customer. However, if we call...
+
+```php
+CustomerFactory::new()->forUser(UserFactory::new()->withAttributes(["name" => "John Doe"]))->create();
+```
+
+...the default will be ignored and instead a `User` called "John Doe" will be assigned to the `Customer`.
+
+For with/has relationship types, the case is much the same:
+
+```php
+class UserFactory extends Factory
+{
+
+    public function defaultWithAddress() 
+    {
+        return AddressFactory::new();
+    }
+
+    public function defaultHasCustomers()
+    {
+        return CustomerFactory::times(10);
+    }
+
+}
+```
+
+In this case, when we call `UserFactory::new()->create()`, it will be given an `Address` and 10 `Customer`s.
+
+If we would like to ignore your defaults for a given test, simply chain the `withoutDefaults` method to your Factory.
+call.
+
+```php
+UserFactory::new()->withoutDefaults()->create();
+```
+
+This will create a `User` with no `Address` or `Customer`s. If you would only like to ignore certain defaults, you may
+pass them as properties to the `withoutDefaults` method.
+
+```php
+UserFactory::new()->withoutDefaults('customers')->create();
+``` 
+
+Now, our created `User` will have no `Customer`s but will have a default `Address`.
+
 ### Troubleshooting
 #### When using magic binding, I get an `ArgumentsNotSatisfiableException`
 This error is thrown when Poser cannot find a factory that satifies the requested relationship method call. So, imagine you called `UserFactory::new()->withCustomers(10)();`, but there was no `CustomerFactory`, Poser would throw this error. The solution is to create the Factory. In this case, we could call `php artisan make:poser CustomerFactory` from the terminal to automatically create the factory for us.
@@ -721,6 +796,52 @@ When we call `UserFactory::new()->withClients()()`, Poser understands that you'r
 ```php
 UserFactory::new()->withClients(CustomerFactory::times(10))();
 ```
+
+#### Poser is creating more models than expected when handling relationships
+This happens when you declare default closures in your Laravel Factories. Poser has no way to detect that these exist, 
+so they are still created when Poser makes the models. Poser provides a suitable workaround to this in Poser defaults.
+If this issue affects you, we recommend stripping out the closures in your Laravel Factories and replacing them with 
+defaults in the relevant Poser Factory. Let's look at an example.
+
+```php
+$factory->define(Customer::class, function (Faker $faker) {
+    return [
+        'name' => $faker->name,
+        'user_id' => function() {
+            return factory(User::class)->create()->id;
+        }
+    ];
+});
+```  
+
+This `Customer` Laravel Factory has a closure for `user_id`, which causes n+1 `User` models to
+be created when calling `UserFactory::new()->withCustomers(n)->create()`. To resolve this issue,
+alter the above factory like so:
+
+```php
+$factory->define(Customer::class, function (Faker $faker) {
+    return [
+        'name' => $faker->name
+    ];
+});
+```  
+
+Now, we can alter the Customer Poser factory, like so:
+
+```php
+class CustomerFactory extends Factory {
+
+    public function defaultForUser()
+    {
+        return UserFactory::new();
+    }
+
+}
+```
+
+Now, when calling `UserFactory::new()->withCustomers(n)->create()`, the default will be ignored, as we have already
+set it. However, when calling `CustomerFactory::new()->create()`, the default will be called and we will set a default
+`User` up for the `Customer`.
 
 ## Changelog
 Take a look at the `CHANGELOG.md` file for details on changes from update to update.
