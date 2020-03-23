@@ -118,4 +118,20 @@ class FactoryTest extends TestCase
         $this->assertEquals('John Namesake', $jane->customers[0]->name);
         $this->assertEquals('John Namesake', $jane->customers[1]->name);
     }
+
+    /** @test */
+    public function it_creates_many_user_with_address_and_many_customers()
+    {
+        UserFactory::times(3)
+            ->withAttributes(['name' => 'test'])
+            ->withAddress()
+            ->withCustomers(
+                CustomerFactory::times(5)
+            )
+            ->create();
+
+        $this->assertEquals(3, User::count());
+        $this->assertEquals(3, Address::count());
+        $this->assertEquals(15, Customer::count());
+    }
 }

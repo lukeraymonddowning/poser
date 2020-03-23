@@ -1,0 +1,12 @@
+{
+    "autoload": {
+        "psr-4": {
+            "Lukeraymonddowning\\Poser\\": "./src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Lukeraymonddowning\\Poser\\Tests\\": "./tests"
+        }
+    }
+}
