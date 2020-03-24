@@ -852,6 +852,8 @@ Take a look at the `CHANGELOG.md` file for details on changes from update to upd
 
 Follow me on Twitter [@LukeDowning19](https://twitter.com/LukeDowning19) for updates!
 
+Also, please star the repo. It really helps! ❤️
+
 ## Security
 If you discover any security-related issues, please email lukeraymonddowning@gmail.com instead of using the issue tracker.
 
