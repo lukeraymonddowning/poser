@@ -75,9 +75,9 @@ abstract class Factory
      *
      * @return \Illuminate\Database\Eloquent\Collection|Model|Model[]|Collection
      */
-    public function __invoke(array $attributes = [])
+    public function __invoke(...$attributes)
     {
-        return $this->create($attributes);
+        return $this->create(...$attributes);
     }
 
     public function __call(string $name, array $arguments)
