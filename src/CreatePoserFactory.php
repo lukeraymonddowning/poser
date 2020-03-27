@@ -121,7 +121,7 @@ class CreatePoserFactory extends GeneratorCommand
     {
         $namespace = trim(modelsNamespace(), '\\');
         $models = ClassFinder::getClassesInNamespace($namespace);
-        if (!\is_array($models) || empty($models)) {
+        if (empty($models)) {
             $this->error('Couldn\'t find any classes at the configured namespace');
             return 1;
         }
