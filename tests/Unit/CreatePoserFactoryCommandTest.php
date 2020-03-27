@@ -19,9 +19,9 @@ class CreatePoserFactoryCommandTest extends TestCase
 
         $this->app->setBasePath(realpath(__DIR__ . '/../storage'));
         $this->app['config']->set('poser.models_namespace', 'Lukeraymonddowning\\Poser\\Tests\\Models\\');
-        $this->app['config']->set('poser.factories_directory', 'NewTestsDir/Factories/');
+        $this->app['config']->set('poser.factories_location', 'NewTestsDir/Factories/');
 
-        $this->newFactoriesDirectory = base_path(config('poser.factories_directory'));
+        $this->newFactoriesDirectory = base_path(config('poser.factories_location'));
 
         File::deleteDirectory(base_path('NewTestsDir'));
     }

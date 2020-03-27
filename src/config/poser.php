@@ -38,6 +38,6 @@ return [
     | you may override this with the path of your Factory namespace.
     |
     */
-    "factories_directory" => "tests/Factories/"
+    "factories_location" => "tests/Factories/"
 
 ];
