@@ -10,7 +10,7 @@ if (!function_exists('modelsNamespace')) {
 if (!function_exists('factoriesNamespace')) {
     function factoriesNamespace()
     {
-        return config('poser.factories_namespace', config('poser.models_directory', "Tests\\Factories\\"));
+        return config('poser.factories_namespace', config('poser.factories_directory', "Tests\\Factories\\"));
     }
 }
 
