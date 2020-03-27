@@ -11,7 +11,7 @@ class CreatePoserFactoryCommandTest extends TestCase
     use RefreshDatabase;
 
     /** @var string */
-    private $newFactoriesDirectory;
+    private $newFactoriesLocation;
 
     protected function setUp(): void
     {
@@ -21,7 +21,7 @@ class CreatePoserFactoryCommandTest extends TestCase
         $this->app['config']->set('poser.models_namespace', 'Lukeraymonddowning\\Poser\\Tests\\Models\\');
         $this->app['config']->set('poser.factories_location', 'NewTestsDir/Factories/');
 
-        $this->newFactoriesDirectory = base_path(config('poser.factories_location'));
+        $this->newFactoriesLocation = base_path(config('poser.factories_location'));
 
         File::deleteDirectory(base_path('NewTestsDir'));
     }
@@ -31,12 +31,12 @@ class CreatePoserFactoryCommandTest extends TestCase
     {
         $this->artisan('make:poser', ['name' => 'NotARealClass'])->assertExitCode(1);
 
-        $this->assertFalse(File::exists($this->newFactoriesDirectory . 'UserFactory.php'));
+        $this->assertFalse(File::exists($this->newFactoriesLocation . 'UserFactory.php'));
 
         $this->artisan('make:poser', ['name' => 'UserFactory'])->assertExitCode(0);
 
-        $this->assertTrue(File::exists($this->newFactoriesDirectory . 'UserFactory.php'));
-        $fileContents = File::get($this->newFactoriesDirectory . 'UserFactory.php');
+        $this->assertTrue(File::exists($this->newFactoriesLocation . 'UserFactory.php'));
+        $fileContents = File::get($this->newFactoriesLocation . 'UserFactory.php');
 
         $this->artisan('make:poser', ['name' => 'UserFactory'])->assertExitCode(2);
 
@@ -58,15 +58,15 @@ class CreatePoserFactoryCommandTest extends TestCase
             '--model' => '\App\NotARealClass'
         ])->assertExitCode(1);
 
-        $this->assertFalse(File::exists($this->newFactoriesDirectory . 'AuthorFactory.php'));
+        $this->assertFalse(File::exists($this->newFactoriesLocation . 'AuthorFactory.php'));
 
         $this->artisan('make:poser', [
             'name' => 'AuthorFactory',
             '--model' => '\Lukeraymonddowning\Poser\Tests\Models\Address'
         ])->assertExitCode(0);
 
-        $this->assertTrue(File::exists($this->newFactoriesDirectory . 'AuthorFactory.php'));
-        $fileContents = File::get($this->newFactoriesDirectory . 'AuthorFactory.php');
+        $this->assertTrue(File::exists($this->newFactoriesLocation . 'AuthorFactory.php'));
+        $fileContents = File::get($this->newFactoriesLocation . 'AuthorFactory.php');
 
         $this->artisan('make:poser', [
             'name' => 'AuthorFactory',
@@ -91,10 +91,10 @@ class CreatePoserFactoryCommandTest extends TestCase
         $this->artisan('make:poser')->assertExitCode(1); //Couldn't find any classes at the namespace
         $this->app['config']->set('poser.models_namespace', $oldNamespace);
 
-        $filesBeforeRun = count(File::glob($this->newFactoriesDirectory . '*.php'));
+        $filesBeforeRun = count(File::glob($this->newFactoriesLocation . '*.php'));
 
         $this->artisan('make:poser')->assertExitCode(0); //Models created, success response
-        $this->assertGreaterThan($filesBeforeRun, count(File::glob($this->newFactoriesDirectory . '*.php')));
+        $this->assertGreaterThan($filesBeforeRun, count(File::glob($this->newFactoriesLocation . '*.php')));
 
         //Models existed but didn't create any Factories since they already existed
         $this->artisan('make:poser')->assertExitCode(2);
@@ -102,8 +102,8 @@ class CreatePoserFactoryCommandTest extends TestCase
         $this->app['config']->set('poser.models_namespace', $oldNamespace);
 
         //Run the rest of the file checks
-        $this->assertTrue(File::exists($this->newFactoriesDirectory . 'UserProfileFactory.php'));
-        $fileContents = File::get($this->newFactoriesDirectory . 'UserProfileFactory.php');
+        $this->assertTrue(File::exists($this->newFactoriesLocation . 'UserProfileFactory.php'));
+        $fileContents = File::get($this->newFactoriesLocation . 'UserProfileFactory.php');
 
         $this->assertStringNotContainsString('{{ Namespace }}', $fileContents);
         $this->assertStringContainsString('namespace Lukeraymonddowning\Poser\Tests\Factories;', $fileContents);

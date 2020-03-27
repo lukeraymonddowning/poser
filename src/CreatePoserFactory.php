@@ -59,7 +59,7 @@ class CreatePoserFactory extends GeneratorCommand
             return 1;
         }
 
-        $destinationDirectory = base_path(factoriesDirectory());
+        $destinationDirectory = base_path(factoriesLocation());
 
         File::ensureDirectoryExists($destinationDirectory);
 
@@ -141,7 +141,7 @@ class CreatePoserFactory extends GeneratorCommand
                 }
             )->filter(
                 function ($factoryName) {
-                    $file = base_path(factoriesDirectory()) . $factoryName . '.php';
+                    $file = base_path(factoriesLocation()) . $factoryName . '.php';
                     return !file_exists($file);
                 }
             )->each(

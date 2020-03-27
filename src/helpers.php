@@ -14,8 +14,8 @@ if (!function_exists('factoriesNamespace')) {
     }
 }
 
-if (!function_exists('factoriesDirectory')) {
-    function factoriesDirectory()
+if (!function_exists('factoriesLocation')) {
+    function factoriesLocation()
     {
         return config('poser.factories_location', "tests/Factories/");
     }
