@@ -4,7 +4,7 @@
 
 # Poser
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-5-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-6-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
@@ -884,6 +884,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="https://github.com/veganista"><img src="https://avatars2.githubusercontent.com/u/405763?v=4" width="100px;" alt=""/><br /><sub><b>veganista</b></sub></a><br /><a href="#ideas-veganista" title="Ideas, Planning, & Feedback">🤔</a></td>
     <td align="center"><a href="https://github.com/bradroberts"><img src="https://avatars0.githubusercontent.com/u/362608?v=4" width="100px;" alt=""/><br /><sub><b>Brad Roberts</b></sub></a><br /><a href="#ideas-bradroberts" title="Ideas, Planning, & Feedback">🤔</a></td>
     <td align="center"><a href="http://rhysbotfield.co.uk"><img src="https://avatars1.githubusercontent.com/u/17741482?v=4" width="100px;" alt=""/><br /><sub><b>Rhys Botfield</b></sub></a><br /><a href="https://github.com/lukeraymonddowning/poser/commits?author=RBotfield" title="Code">💻</a></td>
+    <td align="center"><a href="https://www.martinbetz.eu"><img src="https://avatars1.githubusercontent.com/u/1950766?v=4" width="100px;" alt=""/><br /><sub><b>MB</b></sub></a><br /><a href="#ideas-minthemiddle" title="Ideas, Planning, & Feedback">🤔</a></td>
   </tr>
 </table>
 
