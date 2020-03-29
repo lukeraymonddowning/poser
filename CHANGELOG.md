@@ -1,3 +1,7 @@
+# 2.6.1-beta
+Fixed case sensitivity issues on Linux systems. Added exit codes for the `make:poser` command.
+Added a new `factories_location` key to `poser` config.
+
 # 2.6.0-beta
 Added support for default attributes
 
