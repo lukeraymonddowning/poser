@@ -631,6 +631,10 @@ call. If you would like to ignore all defaults, simply call this method with no 
 
 `$usersWithoutDefaultCustomers = UserFactory::new()->withoutDefaults('customers')->create();`
 
+#### `->withoutEvents()`
+At times, it is useful to disable events when a model is being created to avoid unwanted side-effects in your tests.
+You may append this method to a Poser Factory call to ensure that no events will be fired during model creation.
+
 ### `php artisan make:poser` API
 
 If no arguments are passed to the command, Poser will attempt to create matching factories for every model in your 
