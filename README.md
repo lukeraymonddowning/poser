@@ -46,6 +46,16 @@ Next, publish the Poser config file by calling
 
 `php artisan vendor:publish --tag=poser`
 
+**Lumen Installation**
+
+Create the `poser.php` in your config directory and copy the `lukeraymonddowning/poser/src/config/poser.php` into it
+
+Add `$app->configure('poser');` to the config section in `boostrap/app.php`
+
+Add `$app->register(\Lukeraymonddowning\Poser\PoserServiceProvider::class);` to the providers section in  `boostrap/app.php`
+
+**Getting Started**
+
 To get started quickly, we provide a `php artisan make:poser` command. You may pass the desired name
 of your factory as an argument. So the command to create the `UserFactory` would be `php artisan make:poser UserFactory`.
 
