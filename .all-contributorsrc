@@ -50,6 +50,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "minthemiddle",
+      "name": "MB",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/1950766?v=4",
+      "profile": "https://www.martinbetz.eu",
+      "contributions": [
+        "ideas"
+      ]
     }
   ],
   "contributorsPerLine": 7,
