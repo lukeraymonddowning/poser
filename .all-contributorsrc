@@ -59,6 +59,15 @@
       "contributions": [
         "ideas"
       ]
+    },
+    {
+      "login": "Solomon04",
+      "name": "Solomon Antoine",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/35110194?v=4",
+      "profile": "https://iamsolomon.io",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
