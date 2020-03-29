@@ -3,6 +3,7 @@
 namespace Lukeraymonddowning\Poser;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Database\Eloquent\FactoryBuilder;
 
 class PoserServiceProvider extends ServiceProvider
 {

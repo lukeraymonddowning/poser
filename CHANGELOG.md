@@ -1,3 +1,7 @@
+# 2.7.0-beta
+Added the `withoutEvents()` method, which will disable events from being fired during model
+creation.
+
 # 2.6.2-beta
 Fixed case sensitivity issues on Linux systems. Added exit codes for the `make:poser` command.
 Added a new `factories_location` key to `poser` config.

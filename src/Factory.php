@@ -29,7 +29,8 @@ abstract class Factory
         $pivotAttributes = [],
         $states = [],
         $createdInstance,
-        $defaultsToIgnore;
+        $defaultsToIgnore,
+        $withEvents = true;
 
     public $factory;
 
@@ -194,6 +195,13 @@ abstract class Factory
         return $this;
     }
 
+    public function withoutEvents()
+    {
+        $this->withEvents = false;
+
+        return $this;
+    }
+
     /**
      * Persists the model/s to the database, then returns it/them.
      * This is also the stage where all requested relationships will be bound to the model/s.
@@ -215,7 +223,7 @@ abstract class Factory
         $result->each(
             function ($model) {
                 $this->buildAllForRelationships($model);
-                $model->save();
+                $this->withEvents ? $this->saveModel($model) : $this->saveModelWithoutEvents($model);
             }
         );
 
@@ -231,6 +239,20 @@ abstract class Factory
         $this->createdInstance = $returnFirstCollectionResultAtEnd ? $result->first() : $result;
 
         return $this->createdInstance;
+    }
+
+    protected function saveModel($model)
+    {
+        $model->save();
+    }
+
+    protected function saveModelWithoutEvents($model)
+    {
+        $model::withoutEvents(
+            function () use ($model) {
+                $this->saveModel($model);
+            }
+        );
     }
 
     /**
@@ -250,11 +272,11 @@ abstract class Factory
             $attributeMethodData = $this->getDesiredAttributeData($this->attributes, $i);
             $providedOverrideAttributes = $this->getDesiredAttributeData($attributes, $i);
 
-            $models->push(
-                $this->factory->states($this->states)->make(
-                    array_merge($attributeMethodData, $providedOverrideAttributes)
-                )
+            $model = $this->factory->states($this->states)->make(
+                array_merge($attributeMethodData, $providedOverrideAttributes)
             );
+
+            $models->push($model);
         }
 
         return $models->count() > 1 ? $models : $models->first();
