@@ -13,3 +13,10 @@ if (!function_exists('factoriesNamespace')) {
         return config('poser.factories_namespace', config('poser.factories_directory', "Tests\\Factories\\"));
     }
 }
+
+if (!function_exists('factoriesLocation')) {
+    function factoriesLocation()
+    {
+        return config('poser.factories_location', "tests/Factories/");
+    }
+}

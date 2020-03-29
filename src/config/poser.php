@@ -26,6 +26,18 @@ return [
     |
     */
 
-    "factories_namespace" => "Tests\\Factories\\"
+    "factories_namespace" => "Tests\\Factories\\",
+
+    /*
+    |--------------------------------------------------------------------------
+    | Factories Directory
+    |--------------------------------------------------------------------------
+    |
+    | By default, Poser will place generated files in the 'tests/Factories' directory for your Factory classes.
+    | If you have your Factories in a different location (eg: 'tests/Models/Factories'),
+    | you may override this with the path of your Factory namespace.
+    |
+    */
+    "factories_location" => "tests/Factories/"
 
 ];

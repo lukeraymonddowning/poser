@@ -2,11 +2,12 @@
 
 namespace Lukeraymonddowning\Poser;
 
-use ReflectionException;
+use HaydenPierce\ClassFinder\ClassFinder;
 use Illuminate\Console\GeneratorCommand;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use ReflectionException;
 
 class CreatePoserFactory extends GeneratorCommand
 {
@@ -36,12 +37,10 @@ class CreatePoserFactory extends GeneratorCommand
         $name = $this->argument('name');
 
         if ($name) {
-            $this->createFactory($name);
-
-            return;
+            return $this->createFactory($name);
         }
 
-        $this->createAllFactories();
+        return $this->createAllFactories();
     }
 
     protected function createFactory($factoryName, $className = null)
@@ -50,23 +49,17 @@ class CreatePoserFactory extends GeneratorCommand
 
         $expectedModelNameSpace = '\\' . modelsNamespace() . Str::beforeLast($factoryName, 'Factory');
 
-        // TODO - Decide if this actually should be caught
-        if (($optionModel = $this->option('model')) !== null) {
-            try {
-                $modelReflection = new \ReflectionClass($optionModel);
-                $linkedModelNamespace = '\\' . $modelReflection->getName();
-            } catch (ReflectionException $e) {
-                $linkedModelNamespace = $expectedModelNameSpace;
-            }
-        } else {
-            $linkedModelNamespace = $expectedModelNameSpace;
+        try {
+            $modelReflection = new \ReflectionClass($this->option('model') ?? $expectedModelNameSpace);
+            $linkedModelNamespace = '\\' . $modelReflection->getName();
+        } catch (ReflectionException $e) {
+            $this->error('Could not locate '
+            . ($this->option('model') ?? $expectedModelNameSpace)
+            . ' at configured namespace');
+            return 1;
         }
 
-        // TODO - or just choose this instead
-        // $modelReflection = new \ReflectionClass($this->option('model') ?? $expectedModelNameSpace);
-        // $linkedModelNamespace = '\\' . $modelReflection->getName();
-
-        $destinationDirectory = base_path(str_replace("\\", "/", factoriesNamespace()));
+        $destinationDirectory = base_path(factoriesLocation());
 
         File::ensureDirectoryExists($destinationDirectory);
 
@@ -75,7 +68,7 @@ class CreatePoserFactory extends GeneratorCommand
         if (File::exists($destination)) {
             $this->error("There is already a Factory called " . $factoryName . " at " . $destinationDirectory);
 
-            return;
+            return 2;
         }
 
         $stubVariant = null;
@@ -121,21 +114,20 @@ class CreatePoserFactory extends GeneratorCommand
 
         $this->line("");
         $this->info("Please consider starring the repo at https://github.com/lukeraymonddowning/poser");
+        return 0;
     }
 
     protected function createAllFactories()
     {
+        $namespace = trim(modelsNamespace(), '\\');
+        $models = ClassFinder::getClassesInNamespace($namespace);
+        if (empty($models)) {
+            $this->error('Couldn\'t find any classes at the configured namespace');
+            return 1;
+        }
         $this->info("Creating Factories from all Models...");
-        collect(File::files(str_replace('\\', '/', modelsNamespace())))
+        $collection = collect($models)
             ->filter(
-                function ($fileInfo) {
-                    return class_exists(modelsNamespace() . File::name($fileInfo));
-                }
-            )->map(
-                function ($fileInfo) {
-                    return modelsNamespace() . File::name($fileInfo);
-                }
-            )->filter(
                 function ($className) {
                     return is_subclass_of($className, Model::class);
                 }
@@ -149,13 +141,15 @@ class CreatePoserFactory extends GeneratorCommand
                 }
             )->filter(
                 function ($factoryName) {
-                    return !class_exists(factoriesNamespace() . $factoryName);
+                    $file = base_path(factoriesLocation()) . $factoryName . '.php';
+                    return !file_exists($file);
                 }
             )->each(
                 function ($factoryName) {
                     $this->createFactory($factoryName);
                 }
             );
+        return $collection->isEmpty() ? 2 : 0;
     }
 
     /**
