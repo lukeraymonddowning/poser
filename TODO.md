@@ -1,7 +1,7 @@
 # TODO
 Here you'll find ideas, suggestions, musings and the like regarding changes, additions and
 improvements in the pipeline for Poser. Not all of them will make the final cut, but if they're
-here then at least they won't be lost in the void of lost memory.
+here then at least they won't be lost in the void of bad memory.
 
 If you'd like to help out, feel free to grab one of these ideas, play around with it submit a 
 pull request!
