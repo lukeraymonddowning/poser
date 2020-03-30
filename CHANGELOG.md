@@ -1,3 +1,7 @@
+# 2.8.0-beta
+Relationship methods may now be called statically to create a new Factory instance for a single
+model, instead of calling `::new()`.
+
 # 2.7.0-beta
 Added the `withoutEvents()` method, which will disable events from being fired during model
 creation.

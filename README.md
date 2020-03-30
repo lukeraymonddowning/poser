@@ -455,9 +455,16 @@ public function customer_has_user()
 
 No need to call `create` on the `UserFactory` either; Poser will do that for you!
 
+### Static Instantiation
+If you only want a single instance of a model, you don't necessarily have to use the `::new()` method. When called
+statically, Poser will build a factory instance and handle your relationship methods for you. So instead of writing
+`UserFactory::new()->withCustomers(5)->create()`, we could instead write `UserFactory::withCustomers(5)->create()`.
+
+Note that static resolution only works with dynamic methods, not methods that you define in your factory or methods
+built into the Poser class. So `UserFactory::withoutEvents()->create()` would not work.   
+
 ### Factory States
 If you have setup any States in your laravel factories, then you can also use them with Poser.
-
 So if in your Laravel customer factory class you have the following states setup
 
 ```php
@@ -579,6 +586,9 @@ second argument of the closure.
 
 #### `::new()`
 Creates a new instance of the factory. If you only want to create one model, use this to instantiate the class.
+
+If you're going to call a dynamic relationship method directly after this call, you can remove this call entirely and
+instead call the relationship method statically, like so: `UserFactory::withCustomers(5)->create()`.
 
 #### `::times($count)`
 Creates a new instance of the factory, but informs the factory that you will be creating multiple models.
