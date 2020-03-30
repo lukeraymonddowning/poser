@@ -81,6 +81,13 @@ abstract class Factory
         return $this->create(...$attributes);
     }
 
+    public static function __callStatic($name, $arguments)
+    {
+        $factory = self::new();
+
+        return $factory->$name(...$arguments);
+    }
+
     public function __call(string $name, array $arguments)
     {
         if ($this->handleRelationship($name, $arguments)) {
