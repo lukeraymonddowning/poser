@@ -562,29 +562,25 @@ abstract class Factory
     {
         $this->withRelationships->each(
             function (Relationship $relationship) use ($model) {
-                $models = $relationship->getData() instanceof Factory ? $relationship->getData()->make() : $relationship->getData();
-
-                if ($models instanceof Model) {
-                    $models = collect([$models]);
-                }
-
+                $models = $relationship->buildModels();
                 $models->each(
                     function ($relatedModel, $index) use ($model, $relationship) {
                         $model->{$relationship->getFunctionName()}()->save(
                             $relatedModel,
                             $this->getDesiredAttributeData(
-                                isset($relationship->getData()->pivotAttributes) ? $relationship->getData()->pivotAttributes : [],
+                                isset($relationship->getData()->pivotAttributes) ?
+                                    $relationship->getData()->pivotAttributes : [],
                                 $index
                             )
                         );
 
-                        if ($relationship->getData() instanceof Factory) {
+                        if ($relationship->dataIsFactory()) {
                             $relationship->getData()->buildAllWithRelationships($relatedModel);
                         }
                     }
                 );
 
-                if ($relationship->getData() instanceof Factory) {
+                if ($relationship->dataIsFactory()) {
                     $relationship->getData()->processAfterCreating($models, $model);
                 }
             }
@@ -606,8 +602,7 @@ abstract class Factory
             function (Relationship $relationship) use ($model) {
                 $cachedLocation = "PoserForRelationship_" . $relationship->getFunctionName();
                 if (!isset($this->$cachedLocation)) {
-                    $this->$cachedLocation = $relationship->getData() instanceof Factory ? $relationship->getData()->create(
-                    ) : $relationship->getData();
+                    $this->$cachedLocation = $relationship->createModels();
                 }
                 $model->{$relationship->getFunctionName()}()->associate($this->$cachedLocation);
             }
