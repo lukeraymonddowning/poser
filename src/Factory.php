@@ -341,7 +341,7 @@ abstract class Factory
     protected function handleWithRelationship(string $functionName, array $arguments)
     {
         return Str::startsWith($functionName, ['with', 'has']) ?
-            $this->addRelationship($this->withRelationships, $functionName, $arguments) :
+            (bool) $this->addRelationship($this->withRelationships, $functionName, $arguments) :
             false;
     }
 
@@ -355,21 +355,19 @@ abstract class Factory
     protected function handleForRelationship(string $functionName, array $arguments)
     {
         return Str::startsWith($functionName, 'for') ?
-            $this->addRelationship($this->forRelationships, $functionName, $arguments) :
+            (bool) $this->addRelationship($this->forRelationships, $functionName, $arguments) :
             false;
     }
 
     protected function addRelationship(Collection $relationshipArray, string $functionName, array $arguments)
     {
-        $relationshipArray[] = [
+        return $relationshipArray->push([
             $this->getRelationshipMethodName($functionName),
             $this->buildRelationshipData(
                 $functionName,
                 $arguments
             )
-        ];
-
-        return true;
+        ]);
     }
 
     protected function handleDefaultRelationships()
