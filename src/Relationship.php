@@ -8,17 +8,17 @@ use Illuminate\Database\Eloquent\Model;
 class Relationship
 {
 
-    protected $functionName, $data, $models;
+    protected $methodName, $data, $models;
 
-    public function __construct(string $functionName, object $data)
+    public function __construct(string $methodName, object $data)
     {
-        $this->functionName = $functionName;
+        $this->methodName = $methodName;
         $this->data = $data;
     }
 
-    public function getFunctionName(): string
+    public function getMethodName(): string
     {
-        return $this->functionName;
+        return $this->methodName;
     }
 
     public function getData(): object

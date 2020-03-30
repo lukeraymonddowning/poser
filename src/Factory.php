@@ -401,7 +401,7 @@ abstract class Factory
                     function ($relationships) use ($relationshipMethodName) {
                         return $relationships->filter(
                             function (Relationship $withRelationship) use ($relationshipMethodName) {
-                                return $withRelationship->getFunctionName() == $relationshipMethodName;
+                                return $withRelationship->getMethodName() == $relationshipMethodName;
                             }
                         )->isNotEmpty();
                     }
@@ -565,7 +565,7 @@ abstract class Factory
                 $models = $relationship->buildModels();
                 $models->each(
                     function ($relatedModel, $index) use ($model, $relationship) {
-                        $model->{$relationship->getFunctionName()}()->save(
+                        $model->{$relationship->getMethodName()}()->save(
                             $relatedModel,
                             $this->getDesiredAttributeData(
                                 isset($relationship->getData()->pivotAttributes) ?
@@ -600,11 +600,11 @@ abstract class Factory
     {
         $this->forRelationships->each(
             function (Relationship $relationship) use ($model) {
-                $cachedLocation = "PoserForRelationship_" . $relationship->getFunctionName();
+                $cachedLocation = "PoserForRelationship_" . $relationship->getMethodName();
                 if (!isset($this->$cachedLocation)) {
                     $this->$cachedLocation = $relationship->createModels();
                 }
-                $model->{$relationship->getFunctionName()}()->associate($this->$cachedLocation);
+                $model->{$relationship->getMethodName()}()->associate($this->$cachedLocation);
             }
         );
 
