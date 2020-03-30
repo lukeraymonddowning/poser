@@ -7,6 +7,7 @@ use Closure;
 use ReflectionClass;
 use ReflectionMethod;
 use Mockery\Exception;
+use ReflectionException;
 use Illuminate\Support\Str;
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -341,7 +342,7 @@ abstract class Factory
     protected function handleWithRelationship(string $functionName, array $arguments)
     {
         return Str::startsWith($functionName, ['with', 'has']) ?
-            (bool) $this->addRelationship($this->withRelationships, $functionName, $arguments) :
+            (bool)$this->addRelationship($this->withRelationships, $functionName, $arguments) :
             false;
     }
 
@@ -355,19 +356,21 @@ abstract class Factory
     protected function handleForRelationship(string $functionName, array $arguments)
     {
         return Str::startsWith($functionName, 'for') ?
-            (bool) $this->addRelationship($this->forRelationships, $functionName, $arguments) :
+            (bool)$this->addRelationship($this->forRelationships, $functionName, $arguments) :
             false;
     }
 
     protected function addRelationship(Collection $relationshipArray, string $functionName, array $arguments)
     {
-        return $relationshipArray->push([
-            $this->getRelationshipMethodName($functionName),
-            $this->buildRelationshipData(
-                $functionName,
-                $arguments
+        return $relationshipArray->push(
+            new Relationship(
+                $this->getRelationshipMethodName($functionName),
+                $this->buildRelationshipData(
+                    $functionName,
+                    $arguments
+                )
             )
-        ]);
+        );
     }
 
     protected function handleDefaultRelationships()
@@ -411,7 +414,7 @@ abstract class Factory
     }
 
     /**
-     * @param ReflectionClass $mirror
+     * @throws ReflectionException
      * @return Collection
      */
     protected function getDefaultMethods(): Collection
