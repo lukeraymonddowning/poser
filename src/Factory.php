@@ -340,13 +340,9 @@ abstract class Factory
      */
     protected function handleWithRelationship(string $functionName, array $arguments)
     {
-        if (!Str::startsWith($functionName, ['with', 'has'])) {
-            return false;
-        }
-
-        $this->addRelationship($this->withRelationships, $functionName, $arguments);
-
-        return true;
+        return Str::startsWith($functionName, ['with', 'has']) ?
+            $this->addRelationship($this->withRelationships, $functionName, $arguments) :
+            false;
     }
 
     /**
@@ -358,13 +354,9 @@ abstract class Factory
      */
     protected function handleForRelationship(string $functionName, array $arguments)
     {
-        if (!Str::startsWith($functionName, 'for')) {
-            return false;
-        }
-
-        $this->addRelationship($this->forRelationships, $functionName, $arguments);
-
-        return true;
+        return Str::startsWith($functionName, 'for') ?
+            $this->addRelationship($this->forRelationships, $functionName, $arguments) :
+            false;
     }
 
     protected function addRelationship(Collection $relationshipArray, string $functionName, array $arguments)
@@ -376,6 +368,8 @@ abstract class Factory
                 $arguments
             )
         ];
+
+        return true;
     }
 
     protected function handleDefaultRelationships()
