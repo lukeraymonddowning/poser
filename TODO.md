@@ -19,4 +19,9 @@ At the moment, relationships are handled as an array of arrays. Something like t
 much prefer a `Relationship` class that holds the relationship name and data as parameters.
 
 This might also pave the way for smarter `Relationship` classes that can behave in different ways 
-dependant on the request.
+dependant on the request. 
+
+## Static method instantiation
+
+Similar to Laravel Facades, it would be good to be able to jump right into method calls instead of having to call `::new()`.
+For example: `UserFactory::withCustomers(CustomerFactory::withBooks(5))()`.
