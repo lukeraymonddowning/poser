@@ -21,7 +21,7 @@ much prefer a `Relationship` class that holds the relationship name and data as 
 This might also pave the way for smarter `Relationship` classes that can behave in different ways 
 dependant on the request. 
 
-## Static method instantiation
+## Static method instantiation - completed in 2.8.0-beta
 
 Similar to Laravel Facades, it would be good to be able to jump right into method calls instead of having to call `::new()`.
 For example: `UserFactory::withCustomers(CustomerFactory::withBooks(5))()`.
