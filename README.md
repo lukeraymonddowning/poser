@@ -691,6 +691,9 @@ If you have your Factories in a different directory (eg: `Tests/Models/Factories
 you can let Poser know about it by editing the `factories_namespace` entry in the `poser.php` config
 file.
 
+#### Nested Models
+What if you have a model located in a subfolder? For example: `app/Models/Customers/Customer.php`. You can generate the factory for this by copying the namespace of the model: `php artisan make:poser Models\\Customers\\CustomerFactory`. Note that the namespace should be relative to your `models_namespace` entry in the `poser.php` config file. 
+
 #### The `->create()` and `->make()` commands
 You should call the `create` command at the end of the outermost Factory statement to cause it to persist to the
 database. You do not need to call `create()` or `make()` on nested Factory statements, as Poser will do this for you.
