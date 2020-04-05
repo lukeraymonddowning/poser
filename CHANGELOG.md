@@ -1,3 +1,8 @@
+# 3.0.0-beta
+This release allows you to use the php artisan make:poser command on complex model structures. For example, imagine you have the following model: app/Models/Shipping/ShippingContainer. You can create the factory using the php artisan make:poser Models\\Shipping\\ShippingContainerFactory to generate the corresponding Factory.
+
+Check out the UPGRADE.md guide for details on upgrading to this release.
+
 # 2.8.0-beta
 Relationship methods may now be called statically to create a new Factory instance for a single
 model, instead of calling `::new()`.
