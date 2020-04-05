@@ -7,6 +7,7 @@ use Closure;
 use ReflectionClass;
 use ReflectionMethod;
 use Mockery\Exception;
+use ReflectionException;
 use Illuminate\Support\Str;
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -340,13 +341,9 @@ abstract class Factory
      */
     protected function handleWithRelationship(string $functionName, array $arguments)
     {
-        if (!Str::startsWith($functionName, ['with', 'has'])) {
-            return false;
-        }
-
-        $this->addRelationship($this->withRelationships, $functionName, $arguments);
-
-        return true;
+        return Str::startsWith($functionName, ['with', 'has']) ?
+            (bool)$this->addRelationship($this->withRelationships, $functionName, $arguments) :
+            false;
     }
 
     /**
@@ -358,24 +355,22 @@ abstract class Factory
      */
     protected function handleForRelationship(string $functionName, array $arguments)
     {
-        if (!Str::startsWith($functionName, 'for')) {
-            return false;
-        }
-
-        $this->addRelationship($this->forRelationships, $functionName, $arguments);
-
-        return true;
+        return Str::startsWith($functionName, 'for') ?
+            (bool)$this->addRelationship($this->forRelationships, $functionName, $arguments) :
+            false;
     }
 
     protected function addRelationship(Collection $relationshipArray, string $functionName, array $arguments)
     {
-        $relationshipArray[] = [
-            $this->getRelationshipMethodName($functionName),
-            $this->buildRelationshipData(
-                $functionName,
-                $arguments
+        return $relationshipArray->push(
+            new Relationship(
+                $this->getRelationshipMethodName($functionName),
+                $this->buildRelationshipData(
+                    $functionName,
+                    $arguments
+                )
             )
-        ];
+        );
     }
 
     protected function handleDefaultRelationships()
@@ -405,8 +400,8 @@ abstract class Factory
                 ->filter(
                     function ($relationships) use ($relationshipMethodName) {
                         return $relationships->filter(
-                            function ($withRelationship) use ($relationshipMethodName) {
-                                return $withRelationship[0] == $relationshipMethodName;
+                            function (Relationship $withRelationship) use ($relationshipMethodName) {
+                                return $withRelationship->getFunctionName() == $relationshipMethodName;
                             }
                         )->isNotEmpty();
                     }
@@ -419,7 +414,7 @@ abstract class Factory
     }
 
     /**
-     * @param ReflectionClass $mirror
+     * @throws ReflectionException
      * @return Collection
      */
     protected function getDefaultMethods(): Collection
@@ -566,33 +561,31 @@ abstract class Factory
     protected function buildAllWithRelationships($model)
     {
         $this->withRelationships->each(
-            function ($data) use ($model) {
-                $relationshipName = $data[0];
-                $relatedModels = $data[1];
-                $models = $relatedModels instanceof Factory ? $relatedModels->make() : $relatedModels;
+            function (Relationship $relationship) use ($model) {
+                $models = $relationship->getData() instanceof Factory ? $relationship->getData()->make() : $relationship->getData();
 
                 if ($models instanceof Model) {
                     $models = collect([$models]);
                 }
 
                 $models->each(
-                    function ($relatedModel, $index) use ($model, $relationshipName, $relatedModels) {
-                        $model->{$relationshipName}()->save(
+                    function ($relatedModel, $index) use ($model, $relationship) {
+                        $model->{$relationship->getFunctionName()}()->save(
                             $relatedModel,
                             $this->getDesiredAttributeData(
-                                isset($relatedModels->pivotAttributes) ? $relatedModels->pivotAttributes : [],
+                                isset($relationship->getData()->pivotAttributes) ? $relationship->getData()->pivotAttributes : [],
                                 $index
                             )
                         );
 
-                        if ($relatedModels instanceof Factory) {
-                            $relatedModels->buildAllWithRelationships($relatedModel);
+                        if ($relationship->getData() instanceof Factory) {
+                            $relationship->getData()->buildAllWithRelationships($relatedModel);
                         }
                     }
                 );
 
-                if ($relatedModels instanceof Factory) {
-                    $relatedModels->processAfterCreating($models, $model);
+                if ($relationship->getData() instanceof Factory) {
+                    $relationship->getData()->processAfterCreating($models, $model);
                 }
             }
         );
@@ -610,13 +603,13 @@ abstract class Factory
     protected function buildAllForRelationships(Model $model)
     {
         $this->forRelationships->each(
-            function ($data) use ($model) {
-                $relationshipName = $data[0];
-                $cachedLocation = "PoserForRelationship_" . $relationshipName;
+            function (Relationship $relationship) use ($model) {
+                $cachedLocation = "PoserForRelationship_" . $relationship->getFunctionName();
                 if (!isset($this->$cachedLocation)) {
-                    $this->$cachedLocation = $data[1] instanceof Factory ? $data[1]->create() : $data[1];
+                    $this->$cachedLocation = $relationship->getData() instanceof Factory ? $relationship->getData()->create(
+                    ) : $relationship->getData();
                 }
-                $model->{$relationshipName}()->associate($this->$cachedLocation);
+                $model->{$relationship->getFunctionName()}()->associate($this->$cachedLocation);
             }
         );
 

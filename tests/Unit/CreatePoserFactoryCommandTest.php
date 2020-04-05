@@ -20,6 +20,7 @@ class CreatePoserFactoryCommandTest extends TestCase
         $this->app->setBasePath(realpath(__DIR__ . '/../storage'));
         $this->app['config']->set('poser.models_namespace', 'Lukeraymonddowning\\Poser\\Tests\\Models\\');
         $this->app['config']->set('poser.factories_location', 'NewTestsDir/Factories/');
+        $this->app['config']->set('poser.factories_namespace', 'Lukeraymonddowning\\Poser\\NewTestsDir\\Factories\\');
 
         $this->newFactoriesLocation = base_path(config('poser.factories_location'));
 
@@ -41,7 +42,7 @@ class CreatePoserFactoryCommandTest extends TestCase
         $this->artisan('make:poser', ['name' => 'UserFactory'])->assertExitCode(2);
 
         $this->assertStringNotContainsString('{{ Namespace }}', $fileContents);
-        $this->assertStringContainsString('namespace Lukeraymonddowning\Poser\Tests\Factories;', $fileContents);
+        $this->assertStringContainsString('namespace Lukeraymonddowning\Poser\NewTestsDir\Factories;', $fileContents);
 
         $this->assertStringNotContainsString('{{ ModelNamespace }}', $fileContents);
         $this->assertStringContainsString('\Lukeraymonddowning\Poser\Tests\Models\User[]', $fileContents);
@@ -74,7 +75,7 @@ class CreatePoserFactoryCommandTest extends TestCase
         ])->assertExitCode(2);
 
         $this->assertStringNotContainsString('{{ Namespace }}', $fileContents);
-        $this->assertStringContainsString('namespace Lukeraymonddowning\Poser\Tests\Factories;', $fileContents);
+        $this->assertStringContainsString('namespace Lukeraymonddowning\Poser\NewTestsDir\Factories;', $fileContents);
 
         $this->assertStringNotContainsString('{{ ModelNamespace }}', $fileContents);
         $this->assertStringContainsString('\Lukeraymonddowning\Poser\Tests\Models\Address[]', $fileContents);
@@ -106,7 +107,7 @@ class CreatePoserFactoryCommandTest extends TestCase
         $fileContents = File::get($this->newFactoriesLocation . 'UserProfileFactory.php');
 
         $this->assertStringNotContainsString('{{ Namespace }}', $fileContents);
-        $this->assertStringContainsString('namespace Lukeraymonddowning\Poser\Tests\Factories;', $fileContents);
+        $this->assertStringContainsString('namespace Lukeraymonddowning\Poser\NewTestsDir\Factories;', $fileContents);
 
         $this->assertStringNotContainsString('{{ ModelNamespace }}', $fileContents);
         $this->assertStringContainsString('\Lukeraymonddowning\Poser\Tests\Models\UserProfile[]', $fileContents);
