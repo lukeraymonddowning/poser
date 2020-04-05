@@ -4,6 +4,21 @@ This guide will help you update your app built using Poser when moving up MAJOR 
 As Poser uses [semantic versioning](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&cad=rja&uact=8&ved=2ahUKEwiDj7vJ94foAhXtTRUIHeiSAiwQFjAAegQIARAB&url=https%3A%2F%2Fsemver.org%2F&usg=AOvVaw2wqeU7SPQk7aq7nuXGCrz-)
 there is no need to make any upgrade changes unless the major version number increases.
 
+## 2.x.x-beta - 3.x.x-beta
+Expected upgrade time: 30 seconds
+
+This update adds a new config entry to the `config/poser.php` file that enables better compatibility with Linux systems. You may either republish the config file using `php artisan vendor:publish --tag=poser` or add the entry yourself:
+
+```php
+return [
+
+  // Previous config entries
+  
+  "factories_location" => "tests/Factories/"
+  
+];
+```
+
 ## 1.x.x-beta - 2.x.x-beta
 Expected upgrade time: 0 minutes
 
