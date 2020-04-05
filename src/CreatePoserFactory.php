@@ -11,6 +11,7 @@ use ReflectionException;
 
 class CreatePoserFactory extends GeneratorCommand
 {
+
     protected $signature = 'make:poser {name? : The name of the Poser Factory}
                                        {--m|model= : The model that this factory is linked too}
                                        {--f|factory : Also create the Laravel database factory}';
@@ -53,17 +54,25 @@ class CreatePoserFactory extends GeneratorCommand
             $modelReflection = new \ReflectionClass($this->option('model') ?? $expectedModelNameSpace);
             $linkedModelNamespace = '\\' . $modelReflection->getName();
         } catch (ReflectionException $e) {
-            $this->error('Could not locate '
-            . ($this->option('model') ?? $expectedModelNameSpace)
-            . ' at configured namespace');
+            $this->error(
+                'Could not locate '
+                . ($this->option('model') ?? $expectedModelNameSpace)
+                . ' at configured namespace'
+            );
+
             return 1;
         }
 
-        $destinationDirectory = base_path(factoriesLocation());
+        $requestedModelWithDirectoryString = str_replace("\\", "/", $factoryName);
+        $givenModelNamespace = Str::contains($factoryName, ["/", "\\"]) ?
+            Str::beforeLast($requestedModelWithDirectoryString, "/") :
+            "";
+
+        $destinationDirectory = base_path(factoriesLocation()) . $givenModelNamespace;
 
         File::ensureDirectoryExists($destinationDirectory);
 
-        $destination = $destinationDirectory . $factoryName . ".php";
+        $destination = $destinationDirectory . "/" . Str::afterLast($requestedModelWithDirectoryString, "/") . ".php";
 
         if (File::exists($destination)) {
             $this->error("There is already a Factory called " . $factoryName . " at " . $destinationDirectory);
@@ -80,7 +89,8 @@ class CreatePoserFactory extends GeneratorCommand
 
         $value = File::get($destination);
 
-        $namespace = str_replace('/', '\\', factoriesNamespace());
+        $namespace = str_replace('/', '\\', factoriesNamespace() . $givenModelNamespace);
+
         if (Str::endsWith($namespace, '\\')) {
             $namespace = Str::beforeLast($namespace, '\\');
         }
@@ -93,7 +103,7 @@ class CreatePoserFactory extends GeneratorCommand
             ],
             [
                 $namespace,
-                $factoryName,
+                Str::afterLast($factoryName, "\\"),
                 $linkedModelNamespace,
             ],
             $value
@@ -114,6 +124,7 @@ class CreatePoserFactory extends GeneratorCommand
 
         $this->line("");
         $this->info("Please consider starring the repo at https://github.com/lukeraymonddowning/poser");
+
         return 0;
     }
 
@@ -123,6 +134,7 @@ class CreatePoserFactory extends GeneratorCommand
         $models = ClassFinder::getClassesInNamespace($namespace);
         if (empty($models)) {
             $this->error('Couldn\'t find any classes at the configured namespace');
+
             return 1;
         }
         $this->info("Creating Factories from all Models...");
@@ -142,6 +154,7 @@ class CreatePoserFactory extends GeneratorCommand
             )->filter(
                 function ($factoryName) {
                     $file = base_path(factoriesLocation()) . $factoryName . '.php';
+
                     return !file_exists($file);
                 }
             )->each(
@@ -149,6 +162,7 @@ class CreatePoserFactory extends GeneratorCommand
                     $this->createFactory($factoryName);
                 }
             );
+
         return $collection->isEmpty() ? 2 : 0;
     }
 
