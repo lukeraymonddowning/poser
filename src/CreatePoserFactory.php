@@ -81,7 +81,7 @@ class CreatePoserFactory extends GeneratorCommand
         }
 
         $stubVariant = null;
-        if ($expectedModelNameSpace !== $linkedModelNamespace) {
+        if ($expectedModelNameSpace !== $linkedModelNamespace || strlen($givenModelNamespace) > 0) {
             $stubVariant = 'model';
         }
 
