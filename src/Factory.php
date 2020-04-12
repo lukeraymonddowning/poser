@@ -237,9 +237,9 @@ abstract class Factory
         $result = $this->make(...$attributes);
 
         $returnFirstCollectionResultAtEnd = !$result instanceof Collection;
-        $result = $returnFirstCollectionResultAtEnd ? collect([$result]) : $result;
+        $result = $this->collect($result);
 
-        $result->each(
+        $this->collect($result)->each(
             function ($model) {
                 $this->buildAllForRelationships($model);
                 $this->withEvents ? $this->saveModel($model) : $this->saveModelWithoutEvents($model);
@@ -575,12 +575,11 @@ abstract class Factory
     {
         $this->withRelationships->each(
             function (Relationship $relationship) use ($model) {
-                $models = $relationship->getData() instanceof Factory ? $relationship->getData()->make(
-                ) : $relationship->getData();
-
-                if ($models instanceof Model) {
-                    $models = collect([$models]);
-                }
+                $models = $this->collect(
+                    $relationship->getData() instanceof Factory ?
+                        $relationship->getData()->make() :
+                        $relationship->getData()
+                );
 
                 $models->each(
                     function ($relatedModel, $index) use ($model, $relationship) {
@@ -702,15 +701,11 @@ abstract class Factory
                         }
                     }
                 } elseif (is_string($check)) {
-                    if ($this->createdInstance instanceof Model) {
-                        $this->callPhpUnitMethod($assertion, $compare, $this->createdInstance->$check);
-                    } else {
-                        $this->createdInstance->each(
-                            function (Model $model) use ($assertion, $compare, $check) {
-                                $this->callPhpUnitMethod($assertion, $compare, $model->$check);
-                            }
-                        );
-                    }
+                    $this->collect($this->createdInstance)->each(
+                        function (Model $model) use ($assertion, $compare, $check) {
+                            $this->callPhpUnitMethod($assertion, $compare, $model->$check);
+                        }
+                    );
                 }
             }
         );
@@ -740,5 +735,10 @@ abstract class Factory
             );
 
         return $phpUnit['object'] ?? null;
+    }
+
+    protected function collect($models)
+    {
+        return $models instanceof Collection ? $models : collect([$models]);
     }
 }
