@@ -704,7 +704,7 @@ abstract class Factory
                 } elseif (is_string($check)) {
                     if ($this->createdInstance instanceof Model) {
                         $this->callPhpUnitMethodOnModel(
-                            $assertion->getAssertionName(),
+                            $assertion,
                             $compare,
                             $check,
                             $this->createdInstance
@@ -713,7 +713,7 @@ abstract class Factory
                         $this->createdInstance->each(
                             function (Model $model) use ($assertion, $compare, $check) {
                                 $this->callPhpUnitMethodOnModel(
-                                    $assertion->getAssertionName(),
+                                    $assertion,
                                     $compare,
                                     $check,
                                     $model
@@ -740,12 +740,18 @@ abstract class Factory
         }
     }
 
-    protected function callPhpUnitMethodOnModel($assertionMethodName, $compare, $check, Model $model)
+    protected function callPhpUnitMethodOnModel(Assertion $assertion, $compare, $check, Model $model)
     {
-        $this->phpUnit->$assertionMethodName(
-            $compare,
-            $model->{$check}
-        );
+        if (count($assertion->getArguments()) > 1) {
+            $this->phpUnit->{$assertion->getAssertionName()}(
+                $compare,
+                $model->{$check}
+            );
+        } else {
+            $this->phpUnit->{$assertion->getAssertionName()}(
+                $model->{$check}
+            );
+        }
     }
 
     protected function getPhpUnit()
