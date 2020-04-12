@@ -95,6 +95,10 @@ abstract class Factory
             return $this;
         }
 
+        if (Str::startsWith($name, 'as')) {
+            return $this->as(Str::camel(Str::after($name, 'as')));
+        }
+
         try {
             $model = $this->createdInstance ?? $this->create();
 
