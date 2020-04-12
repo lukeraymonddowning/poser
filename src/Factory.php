@@ -599,8 +599,10 @@ abstract class Factory
                     }
                 );
 
-                if ($relationship->getData() instanceof Factory) {
-                    $relationship->getData()->processAfterCreating($models, $model);
+                if (($factory = $relationship->getData()) instanceof Factory) {
+                    $factory->createdInstance = $models->count() == 1 ? $models->first() : $models;
+                    $factory->processAfterCreating($models, $model);
+                    $factory->processAssertions();
                 }
             }
         );
