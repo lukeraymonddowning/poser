@@ -694,30 +694,20 @@ abstract class Factory
                         if (is_subclass_of($type, Model::class) && !$this->createdInstance instanceof Model) {
                             $this->createdInstance->each(
                                 function (Model $model) use ($assertion, $compare, $check) {
-                                    $this->callPhpUnitMethodOnCallable($assertion, $compare, $check, $model);
+                                    $this->callPhpUnitMethod($assertion, $compare, $check($model));
                                 }
                             );
                         } else {
-                            $this->callPhpUnitMethodOnCallable($assertion, $compare, $check, $this->createdInstance);
+                            $this->callPhpUnitMethod($assertion, $compare, $check($this->createdInstance));
                         }
                     }
                 } elseif (is_string($check)) {
                     if ($this->createdInstance instanceof Model) {
-                        $this->callPhpUnitMethodOnModel(
-                            $assertion,
-                            $compare,
-                            $check,
-                            $this->createdInstance
-                        );
+                        $this->callPhpUnitMethod($assertion, $compare, $this->createdInstance->$check);
                     } else {
                         $this->createdInstance->each(
                             function (Model $model) use ($assertion, $compare, $check) {
-                                $this->callPhpUnitMethodOnModel(
-                                    $assertion,
-                                    $compare,
-                                    $check,
-                                    $model
-                                );
+                                $this->callPhpUnitMethod($assertion, $compare, $model->$check);
                             }
                         );
                     }
@@ -726,30 +716,16 @@ abstract class Factory
         );
     }
 
-    protected function callPhpUnitMethodOnCallable(Assertion $assertion, $compare, $check, $model)
+    protected function callPhpUnitMethod(Assertion $assertion, $compare, $check)
     {
         if (count($assertion->getArguments()) > 1) {
             $this->phpUnit->{$assertion->getAssertionName()}(
                 $compare,
-                $check($model)
+                $check
             );
         } else {
             $this->phpUnit->{$assertion->getAssertionName()}(
-                $check($model)
-            );
-        }
-    }
-
-    protected function callPhpUnitMethodOnModel(Assertion $assertion, $compare, $check, Model $model)
-    {
-        if (count($assertion->getArguments()) > 1) {
-            $this->phpUnit->{$assertion->getAssertionName()}(
-                $compare,
-                $model->{$check}
-            );
-        } else {
-            $this->phpUnit->{$assertion->getAssertionName()}(
-                $model->{$check}
+                $check
             );
         }
     }
