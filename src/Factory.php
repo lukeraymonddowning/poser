@@ -9,8 +9,10 @@ use ReflectionMethod;
 use Mockery\Exception;
 use ReflectionException;
 use Illuminate\Support\Str;
+use PHPUnit\Framework\TestCase;
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Lukeraymonddowning\Poser\Tests\Models\User;
 use Lukeraymonddowning\Poser\Exceptions\ModelNotBuiltException;
 use Lukeraymonddowning\Poser\Exceptions\ArgumentsNotSatisfiableException;
 
@@ -31,7 +33,9 @@ abstract class Factory
         $states = [],
         $createdInstance,
         $defaultsToIgnore,
-        $withEvents = true;
+        $withEvents = true,
+        $assertions,
+        $phpUnit;
 
     public $factory;
 
@@ -57,6 +61,8 @@ abstract class Factory
         $factory = new static();
         $factory->count = $count;
 
+        $factory->phpUnit = $factory->getPhpUnit();
+
         return $factory;
     }
 
@@ -67,6 +73,7 @@ abstract class Factory
         $this->forRelationships = collect([]);
         $this->afterCreating = collect([]);
         $this->defaultsToIgnore = collect([]);
+        $this->assertions = collect([]);
     }
 
     /**
@@ -93,6 +100,10 @@ abstract class Factory
     {
         if ($this->handleRelationship($name, $arguments)) {
             return $this;
+        }
+
+        if (Str::startsWith($name, 'assert')) {
+            return $this->handleAssertion($name, $arguments);
         }
 
         try {
@@ -245,6 +256,8 @@ abstract class Factory
         );
 
         $this->createdInstance = $returnFirstCollectionResultAtEnd ? $result->first() : $result;
+
+        $this->processAssertions();
 
         return $this->createdInstance;
     }
@@ -562,7 +575,8 @@ abstract class Factory
     {
         $this->withRelationships->each(
             function (Relationship $relationship) use ($model) {
-                $models = $relationship->getData() instanceof Factory ? $relationship->getData()->make() : $relationship->getData();
+                $models = $relationship->getData() instanceof Factory ? $relationship->getData()->make(
+                ) : $relationship->getData();
 
                 if ($models instanceof Model) {
                     $models = collect([$models]);
@@ -573,7 +587,8 @@ abstract class Factory
                         $model->{$relationship->getFunctionName()}()->save(
                             $relatedModel,
                             $this->getDesiredAttributeData(
-                                isset($relationship->getData()->pivotAttributes) ? $relationship->getData()->pivotAttributes : [],
+                                isset($relationship->getData()->pivotAttributes) ? $relationship->getData(
+                                )->pivotAttributes : [],
                                 $index
                             )
                         );
@@ -606,8 +621,10 @@ abstract class Factory
             function (Relationship $relationship) use ($model) {
                 $cachedLocation = "PoserForRelationship_" . $relationship->getFunctionName();
                 if (!isset($this->$cachedLocation)) {
-                    $this->$cachedLocation = $relationship->getData() instanceof Factory ? $relationship->getData()->create(
-                    ) : $relationship->getData();
+                    $this->$cachedLocation = $relationship->getData() instanceof Factory ? $relationship->getData()
+                                                                                                        ->create(
+                                                                                                        ) : $relationship->getData(
+                    );
                 }
                 $model->{$relationship->getFunctionName()}()->associate($this->$cachedLocation);
             }
@@ -646,5 +663,98 @@ abstract class Factory
     {
         return static::$modelName ??
             modelsNamespace() . Str::beforeLast(class_basename($this), "Factory");
+    }
+
+    protected function handleAssertion(string $name, array $arguments)
+    {
+        $this->assertions->push(new Assertion($name, $arguments));
+
+        return $this;
+    }
+
+    protected function processAssertions()
+    {
+        $this->assertions->each(
+            function (Assertion $assertion) {
+                if (!($this->phpUnit) instanceof TestCase) {
+                    // TODO: Throw exception
+                }
+
+                $compare = $assertion->getArguments()[0];
+                $check = $assertion->getArguments()[1] ?? $assertion->getArguments()[0];
+
+                if (is_callable($check)) {
+                    $mirror = new \ReflectionFunction($check);
+
+                    if ($mirror->getNumberOfParameters() > 0) {
+                        $type = (optional($mirror->getParameters()[0]->getType())->getName() ?? Model::class);
+
+                        if (is_subclass_of($type, Model::class) && !$this->createdInstance instanceof Model) {
+                            $this->createdInstance->each(
+                                function (Model $model) use ($assertion, $compare, $check) {
+                                    $this->callPhpUnitMethodOnCallable($assertion, $compare, $check, $model);
+                                }
+                            );
+                        } else {
+                            $this->callPhpUnitMethodOnCallable($assertion, $compare, $check, $this->createdInstance);
+                        }
+                    }
+                } elseif (is_string($check)) {
+                    if ($this->createdInstance instanceof Model) {
+                        $this->callPhpUnitMethodOnModel(
+                            $assertion->getAssertionName(),
+                            $compare,
+                            $check,
+                            $this->createdInstance
+                        );
+                    } else {
+                        $this->createdInstance->each(
+                            function (Model $model) use ($assertion, $compare, $check) {
+                                $this->callPhpUnitMethodOnModel(
+                                    $assertion->getAssertionName(),
+                                    $compare,
+                                    $check,
+                                    $model
+                                );
+                            }
+                        );
+                    }
+                }
+            }
+        );
+    }
+
+    protected function callPhpUnitMethodOnCallable(Assertion $assertion, $compare, $check, $model)
+    {
+        if (count($assertion->getArguments()) > 1) {
+            $this->phpUnit->{$assertion->getAssertionName()}(
+                $compare,
+                $check($model)
+            );
+        } else {
+            $this->phpUnit->{$assertion->getAssertionName()}(
+                $check($model)
+            );
+        }
+    }
+
+    protected function callPhpUnitMethodOnModel($assertionMethodName, $compare, $check, Model $model)
+    {
+        $this->phpUnit->$assertionMethodName(
+            $compare,
+            $model->{$check}
+        );
+    }
+
+    protected function getPhpUnit()
+    {
+        $phpUnit = collect(debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT))
+            ->first(
+                function ($trace) {
+                    return ($trace['object'] ?? null) instanceof TestCase;
+                }
+            );
+
+        return $phpUnit['object'] ?? null;
     }
 }
