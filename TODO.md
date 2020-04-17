@@ -12,7 +12,7 @@ Provide typo suggestions in the error message when a user
 types the incorrect relationship method name. For example, if a user typed `withCstomers()`, Poser
 would suggest `did you mean withCustomers()?` in the error message.  
 
-## Relationship Classes
+## Relationship Classes - completed in 3.0.0-beta
 
 At the moment, relationships are handled as an array of arrays. Something like this:
 `[['relationshipName', $data]]`. I'm not a huge fan of this. It doesn't feel right. I would
