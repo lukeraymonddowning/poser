@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Support\Collection;
+
 if (!function_exists('modelsNamespace')) {
     function modelsNamespace()
     {
@@ -18,5 +20,12 @@ if (!function_exists('factoriesLocation')) {
     function factoriesLocation()
     {
         return config('poser.factories_location', "tests/Factories/");
+    }
+}
+
+if (!function_exists('collectUp')) {
+    function collectUp($models)
+    {
+        return $models instanceof Collection ? $models : collect([$models]);
     }
 }

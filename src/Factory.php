@@ -31,7 +31,8 @@ abstract class Factory
         $states = [],
         $createdInstance,
         $defaultsToIgnore,
-        $withEvents = true;
+        $withEvents = true,
+        $testCaseCaller;
 
     public $factory;
 
@@ -62,6 +63,7 @@ abstract class Factory
 
     public function __construct()
     {
+        $this->testCaseCaller = new TestCaseCaller();
         $this->factory = factory($this->getModelName());
         $this->withRelationships = collect([]);
         $this->forRelationships = collect([]);
@@ -92,6 +94,11 @@ abstract class Factory
     public function __call(string $name, array $arguments)
     {
         if ($this->handleRelationship($name, $arguments)) {
+            return $this;
+        }
+
+        if (Str::startsWith($name, 'assert')) {
+            $this->testCaseCaller->addAssertion($name, $arguments);
             return $this;
         }
 
@@ -226,9 +233,9 @@ abstract class Factory
         $result = $this->make(...$attributes);
 
         $returnFirstCollectionResultAtEnd = !$result instanceof Collection;
-        $result = $returnFirstCollectionResultAtEnd ? collect([$result]) : $result;
+        $result = collectUp($result);
 
-        $result->each(
+        collectUp($result)->each(
             function ($model) {
                 $this->buildAllForRelationships($model);
                 $this->withEvents ? $this->saveModel($model) : $this->saveModelWithoutEvents($model);
@@ -245,6 +252,8 @@ abstract class Factory
         );
 
         $this->createdInstance = $returnFirstCollectionResultAtEnd ? $result->first() : $result;
+
+        $this->testCaseCaller->processAssertions($this->createdInstance);
 
         return $this->createdInstance;
     }
@@ -562,18 +571,19 @@ abstract class Factory
     {
         $this->withRelationships->each(
             function (Relationship $relationship) use ($model) {
-                $models = $relationship->getData() instanceof Factory ? $relationship->getData()->make() : $relationship->getData();
-
-                if ($models instanceof Model) {
-                    $models = collect([$models]);
-                }
+                $models = collectUp(
+                    $relationship->getData() instanceof Factory ?
+                        $relationship->getData()->make() :
+                        $relationship->getData()
+                );
 
                 $models->each(
                     function ($relatedModel, $index) use ($model, $relationship) {
                         $model->{$relationship->getFunctionName()}()->save(
                             $relatedModel,
                             $this->getDesiredAttributeData(
-                                isset($relationship->getData()->pivotAttributes) ? $relationship->getData()->pivotAttributes : [],
+                                isset($relationship->getData()->pivotAttributes) ? $relationship->getData(
+                                )->pivotAttributes : [],
                                 $index
                             )
                         );
@@ -584,8 +594,10 @@ abstract class Factory
                     }
                 );
 
-                if ($relationship->getData() instanceof Factory) {
-                    $relationship->getData()->processAfterCreating($models, $model);
+                if (($factory = $relationship->getData()) instanceof Factory) {
+                    $factory->createdInstance = $models->count() == 1 ? $models->first() : $models;
+                    $factory->processAfterCreating($models, $model);
+                    $factory->testCaseCaller->processAssertions($factory->createdInstance);
                 }
             }
         );
@@ -606,8 +618,10 @@ abstract class Factory
             function (Relationship $relationship) use ($model) {
                 $cachedLocation = "PoserForRelationship_" . $relationship->getFunctionName();
                 if (!isset($this->$cachedLocation)) {
-                    $this->$cachedLocation = $relationship->getData() instanceof Factory ? $relationship->getData()->create(
-                    ) : $relationship->getData();
+                    $this->$cachedLocation = $relationship->getData() instanceof Factory ? $relationship->getData()
+                                                                                                        ->create(
+                                                                                                        ) : $relationship->getData(
+                    );
                 }
                 $model->{$relationship->getFunctionName()}()->associate($this->$cachedLocation);
             }
