@@ -72,7 +72,7 @@ class CreatePoserFactory extends GeneratorCommand
 
         File::ensureDirectoryExists($destinationDirectory);
 
-        $destination = $destinationDirectory . "/" . Str::afterLast($requestedModelWithDirectoryString, "/") . ".php";
+        $destination = rtrim($destinationDirectory, "/") . "/" . Str::afterLast($requestedModelWithDirectoryString, "/") . ".php";
 
         if (File::exists($destination)) {
             $this->error("There is already a Factory called " . $factoryName . " at " . $destinationDirectory);
