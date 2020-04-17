@@ -2,8 +2,8 @@
 The first non-beta release of Poser! I've been using Poser in production for a little while now,
 and I'm happy to recommend you do too!
 
-This release adds deep integration with PhpUnit, cleans up a few small issues, and brings in support
-for the `asX` state syntax. 
+This release adds deep integration with PhpUnit and cleans up a few small issues. Check out 
+README.md for more details!
 
 # 3.0.0-beta
 This release allows you to use the php artisan make:poser command on complex model structures. For example, imagine you have the following model: app/Models/Shipping/ShippingContainer. You can create the factory using the php artisan make:poser Models\\Shipping\\ShippingContainerFactory to generate the corresponding Factory.

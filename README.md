@@ -811,6 +811,75 @@ UserFactory::new()->withoutDefaults('customers')->create();
 
 Now, our created `User` will have no `Customer`s but will have a default `Address`.
 
+### Inline Tests
+
+Often, you'll find yourself writing short tests that check certain properties on a model can
+be successfully persisted to the database, or that the expected number of models are related
+to a parent model.
+
+Poser provides you with a super simple syntax for checking all of this. All it requires is that
+you use PhpUnit for testing (which is the default testing library in Laravel).
+
+Simply call a PhpUnit assertion as a chained method of the Factory anywhere before the `create`
+function, and watch the magic happen.
+
+Let's imagine that we want to check that a User has 5 customers attached. Using inline tests, we could write this
+test like so:
+
+```php
+/** @test */
+public function a_user_can_have_customers()
+{
+    UserFactory::withCustomers(5)->assertCount(5, 'customers')();
+}
+```
+
+With just one line, we are able to assert that the count of the `customers` property on the
+created `User` model is 5. Here is another example:
+
+```php
+/** @test */
+public function a_user_can_have_customers()
+{
+    UserFactory::assertEquals('John Doe', 'name')(['name' => 'John Doe']);
+}
+```
+
+Of course, sometimes you'll need more power. To facilitate this, Poser allows you to pass
+a closure as the second argument of all assertion methods:
+
+```php
+/** @test */
+public function a_user_can_have_customers()
+{
+    UserFactory::assertEquals('John', fn($user) => $user->locateFirstName())(['name' => 'John Doe']);
+}
+```
+
+If you're working with multiple models, your method will be passed the Collection, like so:
+
+```php
+/** @test */
+public function a_user_can_have_customers()
+{
+    UserFactory::times(5)->assertCount(5, fn($users) => $users)();
+}
+```
+
+If you wish to perform an assertion on each model in the Collection, you may type hint the closure
+parameter with relevant model type. Poser will iterate over the models for you and run the assertion:
+
+```php
+/** @test */
+public function a_user_can_have_customers()
+{
+    UserFactory::times(5)->withCustomers(10)->assertCount(10, fn(User $user) => $user->customers)();
+}
+```
+
+Whilst we do not recommend using inline tests for complex use cases, it works perfectly for
+simple tests, or tests where the main assertion is on the model itself.
+
 ### Troubleshooting
 #### When using magic binding, I get an `ArgumentsNotSatisfiableException`
 This error is thrown when Poser cannot find a factory that satifies the requested relationship method call. So, imagine you called `UserFactory::new()->withCustomers(10)();`, but there was no `CustomerFactory`, Poser would throw this error. The solution is to create the Factory. In this case, we could call `php artisan make:poser CustomerFactory` from the terminal to automatically create the factory for us.
