@@ -9,10 +9,8 @@ use ReflectionMethod;
 use Mockery\Exception;
 use ReflectionException;
 use Illuminate\Support\Str;
-use PHPUnit\Framework\TestCase;
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Lukeraymonddowning\Poser\Tests\Models\User;
 use Lukeraymonddowning\Poser\Exceptions\ModelNotBuiltException;
 use Lukeraymonddowning\Poser\Exceptions\ArgumentsNotSatisfiableException;
 
@@ -34,8 +32,7 @@ abstract class Factory
         $createdInstance,
         $defaultsToIgnore,
         $withEvents = true,
-        $assertions,
-        $phpUnit;
+        $testCaseCaller;
 
     public $factory;
 
@@ -61,19 +58,17 @@ abstract class Factory
         $factory = new static();
         $factory->count = $count;
 
-        $factory->phpUnit = $factory->getPhpUnit();
-
         return $factory;
     }
 
     public function __construct()
     {
+        $this->testCaseCaller = new TestCaseCaller();
         $this->factory = factory($this->getModelName());
         $this->withRelationships = collect([]);
         $this->forRelationships = collect([]);
         $this->afterCreating = collect([]);
         $this->defaultsToIgnore = collect([]);
-        $this->assertions = collect([]);
     }
 
     /**
@@ -103,7 +98,8 @@ abstract class Factory
         }
 
         if (Str::startsWith($name, 'assert')) {
-            return $this->handleAssertion($name, $arguments);
+            $this->testCaseCaller->addAssertion($name, $arguments);
+            return $this;
         }
 
         try {
@@ -237,9 +233,9 @@ abstract class Factory
         $result = $this->make(...$attributes);
 
         $returnFirstCollectionResultAtEnd = !$result instanceof Collection;
-        $result = $this->collect($result);
+        $result = collectUp($result);
 
-        $this->collect($result)->each(
+        collectUp($result)->each(
             function ($model) {
                 $this->buildAllForRelationships($model);
                 $this->withEvents ? $this->saveModel($model) : $this->saveModelWithoutEvents($model);
@@ -257,7 +253,7 @@ abstract class Factory
 
         $this->createdInstance = $returnFirstCollectionResultAtEnd ? $result->first() : $result;
 
-        $this->processAssertions();
+        $this->testCaseCaller->processAssertions($this->createdInstance);
 
         return $this->createdInstance;
     }
@@ -575,7 +571,7 @@ abstract class Factory
     {
         $this->withRelationships->each(
             function (Relationship $relationship) use ($model) {
-                $models = $this->collect(
+                $models = collectUp(
                     $relationship->getData() instanceof Factory ?
                         $relationship->getData()->make() :
                         $relationship->getData()
@@ -601,7 +597,7 @@ abstract class Factory
                 if (($factory = $relationship->getData()) instanceof Factory) {
                     $factory->createdInstance = $models->count() == 1 ? $models->first() : $models;
                     $factory->processAfterCreating($models, $model);
-                    $factory->processAssertions();
+                    $factory->testCaseCaller->processAssertions($factory->createdInstance);
                 }
             }
         );
@@ -664,81 +660,5 @@ abstract class Factory
     {
         return static::$modelName ??
             modelsNamespace() . Str::beforeLast(class_basename($this), "Factory");
-    }
-
-    protected function handleAssertion(string $name, array $arguments)
-    {
-        $this->assertions->push(new Assertion($name, $arguments));
-
-        return $this;
-    }
-
-    protected function processAssertions()
-    {
-        $this->assertions->each(
-            function (Assertion $assertion) {
-                if (!($this->phpUnit) instanceof TestCase) {
-                    // TODO: Throw exception
-                }
-
-                $compare = $assertion->getArguments()[0];
-                $check = $assertion->getArguments()[1] ?? $assertion->getArguments()[0];
-
-                if (is_callable($check)) {
-                    $mirror = new \ReflectionFunction($check);
-
-                    if ($mirror->getNumberOfParameters() > 0) {
-                        $type = (optional($mirror->getParameters()[0]->getType())->getName() ?? Model::class);
-
-                        if (is_subclass_of($type, Model::class) && !$this->createdInstance instanceof Model) {
-                            $this->createdInstance->each(
-                                function (Model $model) use ($assertion, $compare, $check) {
-                                    $this->callPhpUnitMethod($assertion, $compare, $check($model));
-                                }
-                            );
-                        } else {
-                            $this->callPhpUnitMethod($assertion, $compare, $check($this->createdInstance));
-                        }
-                    }
-                } elseif (is_string($check)) {
-                    $this->collect($this->createdInstance)->each(
-                        function (Model $model) use ($assertion, $compare, $check) {
-                            $this->callPhpUnitMethod($assertion, $compare, $model->$check);
-                        }
-                    );
-                }
-            }
-        );
-    }
-
-    protected function callPhpUnitMethod(Assertion $assertion, $compare, $check)
-    {
-        if (count($assertion->getArguments()) > 1) {
-            $this->phpUnit->{$assertion->getAssertionName()}(
-                $compare,
-                $check
-            );
-        } else {
-            $this->phpUnit->{$assertion->getAssertionName()}(
-                $check
-            );
-        }
-    }
-
-    protected function getPhpUnit()
-    {
-        $phpUnit = collect(debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT))
-            ->first(
-                function ($trace) {
-                    return ($trace['object'] ?? null) instanceof TestCase;
-                }
-            );
-
-        return $phpUnit['object'] ?? null;
-    }
-
-    protected function collect($models)
-    {
-        return $models instanceof Collection ? $models : collect([$models]);
     }
 }
