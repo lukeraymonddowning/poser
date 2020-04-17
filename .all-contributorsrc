@@ -68,6 +68,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "s-patompong",
+      "name": "Patompong Savaengsuk",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/3887531?v=4",
+      "profile": "http://patompong.com",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
