@@ -5,6 +5,8 @@ namespace Lukeraymonddowning\Poser;
 
 
 use ArrayAccess;
+use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Model;
 
 class Relationship
 {
@@ -17,8 +19,16 @@ class Relationship
         $this->data = $data;
     }
 
-    public function getFunctionName(): string
+    public function getFunctionName(Model $model = null): string
     {
+        if (!$model) {
+            return $this->functionName;
+        }
+
+        if (method_exists($model, Str::snake($this->functionName))) {
+            return Str::snake($this->functionName);
+        }
+
         return $this->functionName;
     }
 

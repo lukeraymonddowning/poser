@@ -1,4 +1,8 @@
-# 1.0.0
+# 4.0.1
+Adds backwards-compatible support for `snake_case` relationship methods. Poser will check to see if 
+a `snake_case` method exists on the `Model` and call it if so, instead of the default `camelCase`.
+
+# 4.0.0
 The first non-beta release of Poser! I've been using Poser in production for a little while now,
 and I'm happy to recommend you do too!
 
