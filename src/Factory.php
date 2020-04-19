@@ -14,6 +14,8 @@ use Illuminate\Database\Eloquent\Model;
 use Lukeraymonddowning\Poser\Exceptions\ModelNotBuiltException;
 use Lukeraymonddowning\Poser\Exceptions\ArgumentsNotSatisfiableException;
 
+use function Ramsey\Uuid\v1;
+
 abstract class Factory
 {
 
@@ -99,6 +101,7 @@ abstract class Factory
 
         if (Str::startsWith($name, 'assert')) {
             $this->testCaseCaller->addAssertion($name, $arguments);
+
             return $this;
         }
 
@@ -579,7 +582,7 @@ abstract class Factory
 
                 $models->each(
                     function ($relatedModel, $index) use ($model, $relationship) {
-                        $model->{$relationship->getFunctionName()}()->save(
+                        $model->{$relationship->getFunctionName($model)}()->save(
                             $relatedModel,
                             $this->getDesiredAttributeData(
                                 isset($relationship->getData()->pivotAttributes) ? $relationship->getData(
@@ -616,14 +619,13 @@ abstract class Factory
     {
         $this->forRelationships->each(
             function (Relationship $relationship) use ($model) {
-                $cachedLocation = "PoserForRelationship_" . $relationship->getFunctionName();
+                $cachedLocation = "PoserForRelationship_" . $relationship->getFunctionName($model);
                 if (!isset($this->$cachedLocation)) {
-                    $this->$cachedLocation = $relationship->getData() instanceof Factory ? $relationship->getData()
-                                                                                                        ->create(
-                                                                                                        ) : $relationship->getData(
-                    );
+                    $this->$cachedLocation = $relationship->getData() instanceof Factory
+                        ? $relationship->getData()->create()
+                        : $relationship->getData();
                 }
-                $model->{$relationship->getFunctionName()}()->associate($this->$cachedLocation);
+                $model->{$relationship->getFunctionName($model)}()->associate($this->$cachedLocation);
             }
         );
 
