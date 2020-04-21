@@ -36,6 +36,8 @@ class UserFactory extends Factory {
 }
 ```
 
+## Examples
+Want to see what Poser looks like compared with the default Laravel tests? [Check out our examples!](#before-and-after-examples) 
 
 ## Install
 First, install into your Laravel project using composer.
