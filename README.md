@@ -942,6 +942,80 @@ set it. However, when calling `CustomerFactory::new()->create()`, the default wi
 ## Changelog
 Take a look at the `CHANGELOG.md` file for details on changes from update to update.
 
+## Before and After Examples
+Its easier to show somebody that power of poser than it is to explain it, so here are some before and after code snippets. Plain Laravel vs. Poser. Also, note that all of the following examples have 0 code in the generated factories, so there is no extra work taking place "behind the scenes".
+
+Let's start with one of the main reasons to use Poser: tests with complex relationships. In this example, a `User` can have friends. Those friends are other `User`s, and they are connected via a lookup table. The `User` and his friends can earn `Achievement`s in the application. On the `User` model, we have created a custom `friendsWithAllAchievements` relationship that filters based on the fact that a `User` has every achievemnent available. We want to test this relationship returns the expected amount of friends when called.
+
+```php
+// Without Poser
+
+/** @test */
+function a_user_can_find_friends_with_all_achievements()
+{
+    $user = factory(User::class)->create();
+    $achievements = factory(Achievement::class)->times(10)->create();
+
+    $friendsWithAchievements = factory(User::class)->times(15)->create();
+    $friendsWithAchievements->each(
+        function ($friend) {
+            $friend->achievements()->saveMany($achievements);
+        }
+    );
+
+    $user->friends()->saveMany($friendsWithAchievements);
+
+    $friendsWithoutAchievements = factory(User::class)->times(20)->create();
+
+    $user->friends()->saveMany($friendsWithoutAchievements);
+
+    $this->assertCount(15, $user->friendsWithAllAchievements);
+}
+
+// With Poser
+
+/** @test */
+function a_user_can_find_friends_with_all_achievements()
+{
+    $achievements = AchievementFactory::times(10)();
+
+    UserFactory::withFriends(UserFactory::times(15)->withAchievements($achievements))
+               ->withFriends(UserFactory::times(20))
+               ->assertCount(15, 'friendsWithAllAchievements')();
+}
+```
+
+As you can see, our test written with Poser is much simpler, more readable and manageable. Poser really shines when it comes to tests with a lot of preamble. It can make everybody's life a lot easier, and requires no additional effort!
+
+However, even in 'simple' tests, Poser can make your life very simple. For example, you will often want to create a test to make sure a relationship works as expected, especially in TDD workflows. For the next test, our `User` may have many `Customer`s, but he could also have no `Customer`s. We want to test both possibilities.
+
+```php
+// Without Poser
+
+/** @test */
+function a_user_may_have_customers()
+{
+    $userWithCustomers = factory(User::class)->create();
+    $userWithCustomers->customers()->saveMany(factory(Customer::class)->times(30)->make());
+
+    $userWithoutCustomers = factory(User::class)->create();
+
+    $this->assertCount(30, $userWithCustomers->customers);
+    $this->assertTrue($userWithoutCustomers->customers->isEmpty());
+}
+
+// With Poser
+
+/** @test */
+function a_user_may_have_customers()
+{
+    UserFactory::withCustomers(30)->assertCount(30, 'customers')();
+    UserFactory::assertTrue(fn($user) => $user->customers->isEmpty())();
+}
+```
+
+Even in this very simple test, we were able to reduce our lines of code by more than half, whilst improving readability. Every function used in our Poser example oozes meaning and understanding. In the first test, your eyes tend to glaze over the code. You have to force yourself to read and understand it. In our second test, our eyes are instead drawn to the code. We gain insight into its purpose in seconds, as it almost reads like two sentences.
+
 ## Credits
 
 - [Luke Raymond Downing](https://github.com/lukeraymonddowning)
