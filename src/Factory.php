@@ -11,13 +11,14 @@ use ReflectionException;
 use Illuminate\Support\Str;
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Traits\Macroable;
 use Lukeraymonddowning\Poser\Exceptions\ModelNotBuiltException;
 use Lukeraymonddowning\Poser\Exceptions\ArgumentsNotSatisfiableException;
 
-use function Ramsey\Uuid\v1;
-
 abstract class Factory
 {
+
+    use Macroable;
 
     protected static
         $modelName = null,
@@ -88,13 +89,32 @@ abstract class Factory
 
     public static function __callStatic($name, $arguments)
     {
+        if (self::hasMacro($name)) {
+            return self::callMacroableStaticMethod($name, $arguments);
+        }
+
         $factory = self::new();
 
         return $factory->$name(...$arguments);
     }
 
+    protected static function callMacroableStaticMethod($name, $arguments)
+    {
+        $macro = static::$macros[$name];
+
+        if ($macro instanceof Closure) {
+            return call_user_func_array(Closure::bind($macro, null, static::class), $arguments);
+        }
+
+        return $macro(...$arguments);
+    }
+
     public function __call(string $name, array $arguments)
     {
+        if (self::hasMacro($name)) {
+            return self::callMacroableMethod($name, $arguments);
+        }
+
         if ($this->handleRelationship($name, $arguments)) {
             return $this;
         }
@@ -112,6 +132,17 @@ abstract class Factory
         } catch (Exception $e) {
             throw new ModelNotBuiltException($this, $name, $this->getModelName());
         }
+    }
+
+    protected function callMacroableMethod($name, $arguments)
+    {
+        $macro = static::$macros[$name];
+
+        if ($macro instanceof Closure) {
+            return call_user_func_array($macro->bindTo($this, static::class), $arguments);
+        }
+
+        return $macro(...$arguments);
     }
 
     public function __get(string $name)
