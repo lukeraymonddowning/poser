@@ -63,6 +63,34 @@ abstract class Factory
         return $factory;
     }
 
+    /**
+     * Immediately builds, persists and returns a model of the Factory type,
+     * optionally with the given parameters.
+     *
+     * @param array $attributes
+     * @return Model
+     */
+    public static function craftOne(array $attributes = [])
+    {
+        return self::craft(1, $attributes);
+    }
+
+    /**
+     * Immediately builds, persists an returns the number of requested models
+     * of the Factory type, optionally with the given parameters or parameter sets.
+     *
+     * @param int   $count
+     * @param mixed ...$attributes
+     * @return \Illuminate\Database\Eloquent\Collection|Model|Model[]|Collection
+     */
+    public static function craft(int $count, ...$attributes)
+    {
+        $factory = self::times($count);
+        $factory->withAttributes(...$attributes);
+
+        return $factory->create();
+    }
+
     public function __construct()
     {
         $this->testCaseCaller = new TestCaseCaller();
