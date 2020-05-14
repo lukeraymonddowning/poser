@@ -245,7 +245,7 @@ abstract class Factory
             }
         );
 
-        $this->factory->callAfterCreating($returnFirstCollectionResultAtEnd ? $result->first() : $result);
+        $this->factory->callAfterCreating($result);
         $this->processAfterCreating($result);
 
         $result->each(
