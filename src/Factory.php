@@ -4,6 +4,7 @@
 namespace Lukeraymonddowning\Poser;
 
 use Closure;
+use Illuminate\Support\Arr;
 use ReflectionClass;
 use ReflectionMethod;
 use Mockery\Exception;
@@ -64,29 +65,23 @@ abstract class Factory
     }
 
     /**
-     * Immediately builds, persists and returns a model of the Factory type,
-     * optionally with the given parameters.
+     * For those times where you don't need super complex relationship mapping, and just want to quickly build a model
+     * or collection of models.
      *
-     * @param array $attributes
-     * @return Model
-     */
-    public static function craftOne(array $attributes = [])
-    {
-        return self::craft(1, $attributes);
-    }
-
-    /**
-     * Immediately builds, persists an returns the number of requested models
-     * of the Factory type, optionally with the given parameters or parameter sets.
+     * @param mixed ...$parameters If you need to build multiple models, the first parameter should be desired count,
+     * with any other parameters forming your attribute sets. If you're building a single model, you may omit the count.
      *
-     * @param int   $count
-     * @param mixed ...$attributes
      * @return \Illuminate\Database\Eloquent\Collection|Model|Model[]|Collection
      */
-    public static function craft(int $count, ...$attributes)
+    public static function craft(...$parameters)
     {
-        $factory = self::times($count);
-        $factory->withAttributes(...$attributes);
+        $factory = self::new();
+
+        if (!empty($parameters) && is_int($parameters[0])) {
+            $factory->count = Arr::pull($parameters, 0);
+        }
+
+        $factory->withAttributes(...$parameters);
 
         return $factory->create();
     }
@@ -348,8 +343,8 @@ abstract class Factory
      * Given an array of attribute sets, returns the desired set if available, else the first one available
      * either through looping or retrieving the first one, or an empty array.
      *
-     * @param array $attributes   The array of arrays from which to extract an attribute set.
-     * @param int   $desiredIndex The ideal index of the attribute set you would like
+     * @param array $attributes The array of arrays from which to extract an attribute set.
+     * @param int $desiredIndex The ideal index of the attribute set you would like
      * @return array|mixed
      */
     protected function getDesiredAttributeData(array $attributes, int $desiredIndex)
@@ -363,7 +358,7 @@ abstract class Factory
 
     /**
      * @param string $functionName
-     * @param array  $arguments
+     * @param array $arguments
      * @return bool True if the relationship was handled, or false if it couldn't be handled.
      */
     protected function handleRelationship(string $functionName, array $arguments)
@@ -376,7 +371,7 @@ abstract class Factory
      * Prepares a `with[RelationshipName]` by parsing it and storing it until the factory calls `create()`.
      *
      * @param string $functionName The name of the function that was called by the user.
-     * @param array  $arguments    The arguments that were passed to the function.
+     * @param array $arguments The arguments that were passed to the function.
      * @return bool True if the relationship was handled, else false.
      */
     protected function handleWithRelationship(string $functionName, array $arguments)
@@ -390,7 +385,7 @@ abstract class Factory
      * Prepares a `for[RelationshipName]` by parsing it and storing it until the factory calls `create()`.
      *
      * @param string $functionName The name of the function that was called by the user.
-     * @param array  $arguments    The arguments that were passed to the function.
+     * @param array $arguments The arguments that were passed to the function.
      * @return bool True if the relationship was handled, else false.
      */
     protected function handleForRelationship(string $functionName, array $arguments)
@@ -454,8 +449,8 @@ abstract class Factory
     }
 
     /**
-     * @throws ReflectionException
      * @return Collection
+     * @throws ReflectionException
      */
     protected function getDefaultMethods(): Collection
     {
@@ -509,9 +504,9 @@ abstract class Factory
      * created.
      *
      * @param string $functionName The name of the relationship method that was called by the user.
-     * @param array  $arguments    Any arguments passed to the relationship method.
-     * @throws ArgumentsNotSatisfiableException
+     * @param array $arguments Any arguments passed to the relationship method.
      * @return mixed Usually a Poser Factory, but could be a Model or Collection of Models.
+     * @throws ArgumentsNotSatisfiableException
      */
     protected function buildRelationshipData(string $functionName, array $arguments)
     {
@@ -551,8 +546,8 @@ abstract class Factory
      * For example, `withCustomers()` should return the fully qualified `CustomerFactory`.
      *
      * @param string $methodName The name of the method that was called by the user.
-     * @throws ArgumentsNotSatisfiableException
      * @return string The Poser factory class name that matches the function name.
+     * @throws ArgumentsNotSatisfiableException
      */
     protected function getFactoryNameFromMethodNameOrFail(string $methodName)
     {
@@ -583,7 +578,7 @@ abstract class Factory
      * Constructs and returns fully qualified Poser factory name.
      *
      * @param string $relationshipMethodName The relationship method found on the Laravel Model.
-     * @param string $suffix                 A suffix that should be applied to the Poser Factory name.
+     * @param string $suffix A suffix that should be applied to the Poser Factory name.
      * @return string The constructed fully qualified Poser factory name.
      */
     protected function getFactoryName(string $relationshipMethodName, string $suffix = "")

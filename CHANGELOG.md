@@ -1,5 +1,5 @@
 # 4.1.0
-Adds support for quick create syntax, by using the `craft` and `craftOne` methods. This allows for a simpler
+Adds support for quick create syntax, by using the `craft` method. This allows for a simpler
 syntax when you only need to quickly create a model and don't need to add complex relationship mapping.
 
 # 4.0.1
