@@ -599,8 +599,11 @@ Allows you to create multiple models, persist them to the database, and return t
 method call. A very useful shortcut when you don't need complex relationship mapping. You may pass in the count of
 models you wish to create, along with attributes that should be given to those models.
 
+#### `::craft(...$attributes, int $count)`
+Alternate syntax for `craft` as described above, which more closely matches `factory` method baked into Laravel.
+
 #### `::craft(array $attributes = null)`
-If you only need to craft one model, you can omit the count. It will return the model instead of a collection.
+If you only need to craft one model, you can omit the count. It will return a single model instead of a collection.
 
 #### `->create(...$attributes)` or `(...$attributes)`
 Similar to the Laravel factory `create` command, this will create the models, persisting them to the database.
