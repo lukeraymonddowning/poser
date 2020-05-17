@@ -68,8 +68,9 @@ abstract class Factory
      * For those times where you don't need super complex relationship mapping, and just want to quickly build a model
      * or collection of models.
      *
-     * @param mixed ...$parameters If you need to build multiple models, the first parameter should be desired count,
-     * with any other parameters forming your attribute sets. If you're building a single model, you may omit the count.
+     * @param mixed ...$parameters If you need to build multiple models, the first or last parameter should be the
+     * desired count, with any other parameters forming your attribute sets.
+     * If you're building a single model, you may omit the count.
      *
      * @return \Illuminate\Database\Eloquent\Collection|Model|Model[]|Collection
      */
@@ -77,8 +78,16 @@ abstract class Factory
     {
         $factory = self::new();
 
-        if (!empty($parameters) && is_int($parameters[0])) {
+        if (empty($parameters)) {
+            return $factory->create();
+        }
+
+        if (is_int($parameters[0])) {
             $factory->count = Arr::pull($parameters, 0);
+        }
+
+        if (is_int(Arr::last($parameters))) {
+            $factory->count = Arr::pull($parameters, count($parameters) - 1);
         }
 
         $factory->withAttributes(...$parameters);
