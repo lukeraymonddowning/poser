@@ -596,6 +596,17 @@ instead call the relationship method statically, like so: `UserFactory::withCust
 Creates a new instance of the factory, but informs the factory that you will be creating multiple models.
 Use this to instantiate the class when you wish to create multiple entries in the database.
 
+#### `::craft(int $count, ...$attributes)`
+Allows you to create multiple models, persist them to the database, and return the resulting collection, all in one
+method call. A very useful shortcut when you don't need complex relationship mapping. You may pass in the count of
+models you wish to create, along with attributes that should be given to those models.
+
+#### `::craft(...$attributes, int $count)`
+Alternate syntax for `craft` as described above, which more closely matches `factory` method baked into Laravel.
+
+#### `::craft(array $attributes = null)`
+If you only need to craft one model, you can omit the count. It will return a single model instead of a collection.
+
 #### `->create(...$attributes)` or `(...$attributes)`
 Similar to the Laravel factory `create` command, this will create the models, persisting them to the database.
 You may pass an associative array of column names with desired values, which will be applied to the 
