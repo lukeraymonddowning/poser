@@ -36,6 +36,11 @@ class UserFactory extends Factory {
 }
 ```
 
+## Note for Laravel 8 users
+Whilst Poser is tagged for Laravel 8, you should start migrating to use Laravel's new built in class based factories.
+The syntax is nearly identical and you'll pick it up in no time. I want to thank everybody who used, tested, 
+altered and discussed Poser. Its been so much fun to build something to the Laravel community!
+
 ## Examples
 Want to see what Poser looks like compared with the default Laravel tests? [Check out our examples!](#before-and-after-examples) 
 

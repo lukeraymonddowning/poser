@@ -13,12 +13,12 @@
         }
     ],
     "require": {
-        "illuminate/support": "^6.0|^7.0",
+        "illuminate/support": "^6.0|^7.0|^8.0",
         "haydenpierce/class-finder": "^0.4.0"
     },
     "require-dev": {
         "orchestra/testbench": "^4.0",
-        "illuminate/database": "^6.0|^7.0",
+        "illuminate/database": "^6.0|^7.0|^8.0",
         "phpunit/phpunit": "^8.0"
     },
     "autoload": {
